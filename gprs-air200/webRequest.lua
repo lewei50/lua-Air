@@ -61,7 +61,7 @@ function sendSensorValue(sname,svalue)
      
      data = "POST /api/V1/gateway/UpdateSensorsBySN/"..misc.getimei().." HTTP/1.1\r\nHost: www.lewei50.com\r\nContent-Length: " .. string.len(PostData) .. "\r\n\r\n"..PostData .. "\r\n"
      if(validDev) then
-     	pins.set(false,pincfg.PIN24)
+     	--pins.set(false,pincfg.PIN24)
      	snd(data)
      end
      sensorValueTable = {}
@@ -273,7 +273,7 @@ function rcv(idx,fbStr)
 		end
 	end
 	
-	pins.set(true,pincfg.PIN24)
+	--pins.set(true,pincfg.PIN24)
 end
 
 --[[
