@@ -59,7 +59,7 @@ local function parse(data)
           else
                pm25 = (string.byte(data,13)*256+string.byte(data,14))
                if(string.byte(data,29) ~=nil and string.byte(data,30)~=nil)then
-                    if(string.byte(data,29) == 0x71)then
+                    if(string.byte(data,29) > 0x50 and string.byte(data,30) == 0x00)then
                          hcho = nil
                          bIsPms5003 = true
                          bIsPms5003s = false
@@ -71,8 +71,8 @@ local function parse(data)
                          end
                          hcho = (string.byte(data,29)*256+string.byte(data,30))/1000
                          if(hcho~=nil)then
-					                    lcd.setText("HCHO",hcho)
-					               end
+								lcd.setText("HCHO",hcho)
+						   end
                     end
                end
           end
@@ -80,7 +80,7 @@ local function parse(data)
 					lcd.setText("pm25",pm25..result)
 					lcd.setText("aqi",aqi)
 					
-     end
+    end
 	
 	rdbuf = ""
 end
