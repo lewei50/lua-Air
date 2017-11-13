@@ -83,12 +83,13 @@ local function parse(data)
      end
 	--HH-HCHO-M sensor decode
 	if(((string.byte(data,1)==0xff) and(string.byte(data,2)==0x17))) then
-		hcho = (string.byte(data,5)*256+string.byte(data,6))
+		hcho_orig = (string.byte(data,5)*256+string.byte(data,6))
+		hcho = hcho_orig/1000 .."."..hcho_orig/100 ..hcho_orig/10
 		if(hcho~=nil)then
 			if(lcd.getCurrentPage()~=4) then
 				lcd.setPage(4)
 			end
-			lcd.setText("HCHO",hcho.."ppb")
+			lcd.setText("HCHO",hcho.."ug/m3")
 		end
 	end
 	
