@@ -69,7 +69,8 @@ local function parse(data)
                          if(lcd.getCurrentPage()~=4) then
                          	lcd.setPage(4)
                          end
-                         hcho = (string.byte(data,29)*256+string.byte(data,30))
+                         hcho_orig = (string.byte(data,29)*256+string.byte(data,30))
+                         hcho = hcho_orig/1000 .."."..hcho_orig/100 ..hcho_orig/10
                          if(hcho~=nil)then
 					                    lcd.setText("HCHO",hcho.."ppb")
 					               end
