@@ -1,0 +1,35 @@
+Removed Pin From Net: NetName=VDDIO Pin=J2-17
+Removed Pin From Net: NetName=SCL Pin=J2-19
+Removed Pin From Net: NetName=SDA Pin=J2-20
+Added Component: Designator=J3(DB-1X4)
+Added Component: Designator=J5(DB-1X4)
+Added Component: Designator=J6(DB-1X4)
+Added Component: Designator=J7(DB-1X4)
+Added Component: Designator=J8(DB-1X4)
+Added Pin To Net: NetName=SDA Pin=J2-17
+Added Pin To Net: NetName=VDDIO Pin=J2-19
+Added Pin To Net: NetName=SCL Pin=J2-20
+Added Pin To Net: NetName=GND Pin=J3-3
+Added Pin To Net: NetName=VUSB Pin=J3-4
+Added Pin To Net: NetName=SCL Pin=J5-1
+Added Pin To Net: NetName=SDA Pin=J5-2
+Added Pin To Net: NetName=VDDIO Pin=J5-3
+Added Pin To Net: NetName=GND Pin=J5-4
+Added Pin To Net: NetName=SDA Pin=J6-1
+Added Pin To Net: NetName=SCL Pin=J6-2
+Added Pin To Net: NetName=GND Pin=J6-3
+Added Pin To Net: NetName=VDDIO Pin=J6-4
+Added Pin To Net: NetName=VDDIO Pin=J7-1
+Added Pin To Net: NetName=GND Pin=J7-2
+Added Pin To Net: NetName=SCL Pin=J7-3
+Added Pin To Net: NetName=SDA Pin=J7-4
+Added Pin To Net: NetName=VDDIO Pin=J8-1
+Added Pin To Net: NetName=SCL Pin=J8-2
+Added Pin To Net: NetName=SDA Pin=J8-3
+Added Pin To Net: NetName=GND Pin=J8-4
+Added Member To Class: ClassName=lw-skit Member=Component J3 SIP4
+Added Member To Class: ClassName=lw-skit Member=Component J5 SI7021
+Added Member To Class: ClassName=lw-skit Member=Component J6 GY-302/BH1750
+Added Member To Class: ClassName=lw-skit Member=Component J7 GY-68/BMP180
+Added Member To Class: ClassName=lw-skit Member=Component J8 SI7021
+Added Room: Name=lw-skit
