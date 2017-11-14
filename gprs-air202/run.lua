@@ -20,8 +20,17 @@ local rdbuf = ""
 返回值：无
 ]]
 local function print(...)
-	_G.print("run",...)
+	_G.print("[run]",...)
 end
+
+
+
+local function DS_HCHO_Data_request()
+	uart.write(UART_ID,string.char(0x42)..string.char(0x4d)..string.char(0x01)..string.char(0x00)..string.char(0x00)..string.char(0x00)..string.char(0x90))
+end
+
+
+
 
 local function calcAQI(pNum)
      --local clow = {0,15.5,40.5,65.5,150.5,250.5,350.5}
@@ -70,7 +79,7 @@ local function parse(data)
                          	lcd.setPage(4)
                          end
                          hcho_orig = (string.byte(data,29)*256+string.byte(data,30))
-                         hcho = hcho_orig/1000 .."."..hcho_orig/100 ..hcho_orig/10
+                         hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)
                          if(hcho~=nil)then
 					                    lcd.setText("HCHO",hcho.."mg/m3")
 					               end
@@ -80,18 +89,72 @@ local function parse(data)
           aqi,result = calcAQI(pm25)
 					lcd.setText("pm25",pm25..result)
 					lcd.setText("aqi",aqi)
-					
      end
 	--HH-HCHO-M sensor decode
 	if(((string.byte(data,1)==0xff) and(string.byte(data,2)==0x17))) then
 		hcho_orig = (string.byte(data,5)*256+string.byte(data,6))
-		hcho = hcho_orig/1000 .."."..hcho_orig/100 ..hcho_orig/10
+		hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)
 		if(hcho~=nil)then
 			if(lcd.getCurrentPage()~=4) then
 				lcd.setPage(4)
 			end
 			lcd.setText("HCHO",hcho.."mg/m3")
 		end
+		--get more accurate date to lewei end
+		hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)..tostring(hcho_orig%10)
+	end
+	
+	--DS HCHO sensor decode (from uart1)
+	if((string.byte(data,1)==0x42) and(string.byte(data,2)==0x4d) and(string.byte(data,3)==0x08) and(string.byte(data,4)==0x14)) then
+		unit_byte = string.byte(data,5)
+		rate_byte = string.byte(data,6)
+		data_byte_h = string.byte(data,7)
+		data_byte_l = string.byte(data,8)
+		if(unit_byte==1) then
+			unit = "ppm"
+		elseif(unit_byte == 2) then
+			unit = "VOL"
+		elseif(unit_byte == 3) then
+			unit = "LEL"
+		elseif(unit_byte == 4) then
+			unit = "ppb"
+		elseif(unit_byte == 5) then
+			unit = "mg/m3"
+		end
+		
+		if(rate_byte==1) then
+			rate = 1
+		elseif(rate_byte == 2) then
+			rate = 10
+		elseif(rate_byte == 3) then
+			rate = 100
+		elseif(rate_byte == 4) then
+			rate = 1000
+		end
+		
+		--print ("DSHCHO:HIGH:"..data_byte_h.." LOW:"..data_byte_l..unit)
+		
+		hcho_orig = data_byte_h*256+data_byte_l
+		curr_rate = rate
+		hcho = ""
+		for i = 1,rate_byte,1 do
+    	hcho = hcho .. hcho_orig/curr_rate
+    	if(i==1)then 
+    		hcho = hcho .."." 
+    	end
+    	hcho_orig = hcho_orig % curr_rate
+    	curr_rate = curr_rate /10
+    end
+    --print("HCHO:"..hcho)
+		if(hcho~=nil)then
+			if(lcd.getCurrentPage()~=4) then
+				sys.timer_start(lcd.setPage,500,4)
+				sys.timer_start(lcd.setText,800,"HCHO",hcho..unit)
+			end
+		end
+		
+		--revert to UART2
+		uart2check()
 	end
 	
 	rdbuf = ""
@@ -113,10 +176,32 @@ local function read()
 		data = uart.read(UART_ID,"*l",0)
 		if not data or string.len(data) == 0 then break end
 		--打开下面的打印会耗时
-		--print("read",data,common.binstohexs(data))
+		--print("read:",data,common.binstohexs(data))
 		rdbuf = rdbuf..data	
 	end
 	sys.timer_start(parse,50,rdbuf)
+end
+
+
+function uart2check()
+	--uart.close(1)
+	UART_ID =2
+	sys.reguart(UART_ID,read)
+	uart.setup(UART_ID,9600,8,uart.PAR_NONE,uart.STOP_1)
+	lcd.enableRefresh()
+	print("change to UART2")
+end
+
+function uart1check()
+	lcd.disableRefresh()
+	uart.close(2)
+	UART_ID =1
+	sys.reguart(UART_ID,read)
+	uart.setup(UART_ID,9600,8,uart.PAR_NONE,uart.STOP_1)
+	sys.timer_start(DS_HCHO_Data_request,100)
+	--set 2s to uart1 timedout,then revert to uart2
+	sys.timer_start(uart2check,2000)
+	print("change to UART1")
 end
 
 --[[
@@ -153,6 +238,7 @@ function dataUpload()
 	end
 end
 
+
 --保持系统处于唤醒状态，此处只是为了测试需要，所以此模块没有地方调用pm.sleep("run")休眠，不会进入低功耗休眠状态
 --在开发“要求功耗低”的项目时，一定要想办法保证pm.wake("run")后，在不需要串口时调用pm.sleep("run")
 pm.wake("run")
@@ -164,6 +250,9 @@ uart.setup(UART_ID,9600,8,uart.PAR_NONE,uart.STOP_1)
 lcd.setInfo("设备初始化中")
 
 sys.timer_loop_start(statusChk,2000)
+
+--set uart1 to commnunicate to HCHO sensors
+sys.timer_loop_start(uart1check,30000)
 
 sys.timer_loop_start(dataUpload,120000)
 

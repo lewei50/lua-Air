@@ -9,9 +9,18 @@ local LCD_UART_ID = 2
 local currentPage = 0
 local pageLock = false
 local testDot = false
+local bEnableRefresh = true
 
 function getCurrentPage()
 	return currentPage
+end
+
+function disableRefresh()
+	bEnableRefresh = false
+end
+
+function enableRefresh()
+	bEnableRefresh = true
 end
 
 --帧头类型以及帧尾
@@ -47,8 +56,10 @@ end
 返回值：无
 ]]
 function write(s)
-	print("write",s)
-	uart.write(LCD_UART_ID,s..string.char(255)..string.char(255)..string.char(255))
+	if(bEnableRefresh == true) then
+		print("write",s)
+		uart.write(LCD_UART_ID,s..string.char(255)..string.char(255)..string.char(255))
+	end
 end
 
 function setPage(id)
