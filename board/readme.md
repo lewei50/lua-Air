@@ -6,8 +6,9 @@ github地址：[https://github.com/lewei50/lua-Air/tree/master/board][1]
 # YNM-3000-1 （recommend）
 
 合宙 air202 作为主控 的气体检测万用版。
+板子介绍：[YNM-3000-1板子介绍][2]
 
-![此处输入图片的描述][2]
+![YNM-3000-1板子照片][3]
 
 **支持如下传感器**
  - SI7021	 
@@ -21,7 +22,6 @@ github地址：[https://github.com/lewei50/lua-Air/tree/master/board][1]
  - HH-HCHO-M	
  - 甲醛 WZ-S	
  - 甲醛 DS-HCHO	甲醛
-
 
 
 # AIR200-S1
