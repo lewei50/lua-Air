@@ -11,6 +11,8 @@ local aqi,pm25,hcho = nil
 local UART_ID = 2
 --串口读到的数据缓冲区
 local rdbuf = ""
+local rdbuf1 = ""
+local rdbuf2 = ""
 
 
 --[[
@@ -26,7 +28,7 @@ end
 
 
 local function DS_HCHO_Data_request()
-	uart.write(UART_ID,string.char(0x42)..string.char(0x4d)..string.char(0x01)..string.char(0x00)..string.char(0x00)..string.char(0x00)..string.char(0x90))
+	uart.write(1,string.char(0x42)..string.char(0x4d)..string.char(0x01)..string.char(0x00)..string.char(0x00)..string.char(0x00)..string.char(0x90))
 end
 
 
@@ -59,50 +61,8 @@ end
 参数  ：
 		data：所有未处理的数据
 ]]
-local function parse(data)
-	if not data then return end	
-	if((((string.byte(data,1)==0x42) and(string.byte(data,2)==0x4d)) or ((string.byte(data,1)==0x32) and(string.byte(data,2)==0x3d))) and string.byte(data,13)~=nil and string.byte(data,14)~=nil)  then
-          if((string.byte(data,1)==0x32) and(string.byte(data,2)==0x3d)) then
-               --Teetc.com
-               pm25 = (string.byte(data,7)*256+string.byte(data,8))
-          else
-               pm25 = (string.byte(data,13)*256+string.byte(data,14))
-               if(string.byte(data,29) ~=nil and string.byte(data,30)~=nil)then
-                    if(string.byte(data,29) > 0x50 and string.byte(data,30) == 0x00)then
-                         hcho = nil
-                         bIsPms5003 = true
-                         bIsPms5003s = false
-                    else
-                         bIsPms5003 = false
-                         bIsPms5003s = true
-                         if(lcd.getCurrentPage()~=4) then
-                         	lcd.setPage(4)
-                         end
-                         hcho_orig = (string.byte(data,29)*256+string.byte(data,30))
-                         hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)
-                         if(hcho~=nil)then
-					                    lcd.setText("HCHO",hcho.."mg/m3")
-					               end
-                    end
-               end
-          end
-          aqi,result = calcAQI(pm25)
-					lcd.setText("pm25",pm25..result)
-					lcd.setText("aqi",aqi)
-     end
-	--HH-HCHO-M sensor decode
-	if(((string.byte(data,1)==0xff) and(string.byte(data,2)==0x17))) then
-		hcho_orig = (string.byte(data,5)*256+string.byte(data,6))
-		hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)
-		if(hcho~=nil)then
-			if(lcd.getCurrentPage()~=4) then
-				lcd.setPage(4)
-			end
-			lcd.setText("HCHO",hcho.."mg/m3")
-		end
-		--get more accurate date to lewei end
-		hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)..tostring(hcho_orig%10)
-	end
+
+local function parse1(data)
 	
 	--DS HCHO sensor decode (from uart1)
 	if((string.byte(data,1)==0x42) and(string.byte(data,2)==0x4d) and(string.byte(data,3)==0x08) and(string.byte(data,4)==0x14)) then
@@ -148,16 +108,61 @@ local function parse(data)
     --print("HCHO:"..hcho)
 		if(hcho~=nil)then
 			if(lcd.getCurrentPage()~=4) then
-				sys.timer_start(lcd.setPage,500,4)
-				sys.timer_start(lcd.setText,800,"HCHO",hcho..unit)
+				lcd.setPage(4)
 			end
+			lcd.setText("HCHO",hcho..unit)
 		end
 		
-		--revert to UART2
-		uart2check()
 	end
+	rdbuf1 = ""
+end
+
+local function parse2(data)
 	
-	rdbuf = ""
+	if not data then return end	
+	if((((string.byte(data,1)==0x42) and(string.byte(data,2)==0x4d)) or ((string.byte(data,1)==0x32) and(string.byte(data,2)==0x3d))) and string.byte(data,13)~=nil and string.byte(data,14)~=nil)  then
+          if((string.byte(data,1)==0x32) and(string.byte(data,2)==0x3d)) then
+               --Teetc.com
+               pm25 = (string.byte(data,7)*256+string.byte(data,8))
+          else
+               pm25 = (string.byte(data,13)*256+string.byte(data,14))
+               if(string.byte(data,29) ~=nil and string.byte(data,30)~=nil)then
+                    if(string.byte(data,29) > 0x50 and string.byte(data,30) == 0x00)then
+                         hcho = nil
+                         bIsPms5003 = true
+                         bIsPms5003s = false
+                    else
+                         bIsPms5003 = false
+                         bIsPms5003s = true
+                         if(lcd.getCurrentPage()~=4) then
+                         	lcd.setPage(4)
+                         end
+                         hcho_orig = (string.byte(data,29)*256+string.byte(data,30))
+                         hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)
+                         if(hcho~=nil)then
+					                    lcd.setText("HCHO",hcho.."mg/m3")
+					               end
+                    end
+               end
+          end
+          aqi,result = calcAQI(pm25)
+					lcd.setText("pm25",pm25..result)
+					lcd.setText("aqi",aqi)
+     end
+	--HH-HCHO-M sensor decode
+	if(((string.byte(data,1)==0xff) and(string.byte(data,2)==0x17))) then
+		hcho_orig = (string.byte(data,5)*256+string.byte(data,6))
+		hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)
+		if(hcho~=nil)then
+			if(lcd.getCurrentPage()~=4) then
+				lcd.setPage(4)
+			end
+			lcd.setText("HCHO",hcho.."mg/m3")
+		end
+		--get more accurate date to lewei end
+		hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)..tostring(hcho_orig%10)
+	end
+	rdbuf2 = ""
 end
 
 --[[
@@ -182,27 +187,42 @@ local function read()
 	sys.timer_start(parse,50,rdbuf)
 end
 
-
-function uart2check()
-	--uart.close(1)
-	UART_ID =2
-	sys.reguart(UART_ID,read)
-	uart.setup(UART_ID,9600,8,uart.PAR_NONE,uart.STOP_1)
-	lcd.enableRefresh()
-	print("change to UART2")
+local function read1()
+	local data = ""
+	--底层core中，串口收到数据时：
+	--如果接收缓冲区为空，则会以中断方式通知Lua脚本收到了新数据；
+	--如果接收缓冲器不为空，则不会通知Lua脚本
+	--所以Lua脚本中收到中断读串口数据时，每次都要把接收缓冲区中的数据全部读出，这样才能保证底层core中的新数据中断上来，此read函数中的while语句中就保证了这一点
+	while true do		
+		data = uart.read(1,"*l",0)
+		if not data or string.len(data) == 0 then break end
+		--打开下面的打印会耗时
+		--print("read:",data,common.binstohexs(data))
+		rdbuf1 = rdbuf1..data	
+	end
+	sys.timer_start(parse1,50,rdbuf1)
 end
 
-function uart1check()
-	lcd.disableRefresh()
-	uart.close(2)
-	UART_ID =1
-	sys.reguart(UART_ID,read)
-	uart.setup(UART_ID,9600,8,uart.PAR_NONE,uart.STOP_1)
-	sys.timer_start(DS_HCHO_Data_request,100)
-	--set 2s to uart1 timedout,then revert to uart2
-	sys.timer_start(uart2check,2000)
-	print("change to UART1")
+
+local function read2()
+	local data = ""
+	--底层core中，串口收到数据时：
+	--如果接收缓冲区为空，则会以中断方式通知Lua脚本收到了新数据；
+	--如果接收缓冲器不为空，则不会通知Lua脚本
+	--所以Lua脚本中收到中断读串口数据时，每次都要把接收缓冲区中的数据全部读出，这样才能保证底层core中的新数据中断上来，此read函数中的while语句中就保证了这一点
+	while true do		
+		data = uart.read(2,"*l",0)
+		if not data or string.len(data) == 0 then break end
+		--打开下面的打印会耗时
+		--print("read:",data,common.binstohexs(data))
+		rdbuf2 = rdbuf2..data	
+	end
+	sys.timer_start(parse2,50,rdbuf2)
 end
+
+
+
+
 
 --[[
 函数名：write
@@ -243,16 +263,23 @@ end
 --在开发“要求功耗低”的项目时，一定要想办法保证pm.wake("run")后，在不需要串口时调用pm.sleep("run")
 pm.wake("run")
 --注册串口的数据接收函数，串口收到数据后，会以中断方式，调用read接口读取数据
-sys.reguart(UART_ID,read)
+--sys.reguart(UART_ID,read)
 --配置并且打开串口
-uart.setup(UART_ID,9600,8,uart.PAR_NONE,uart.STOP_1)
+--uart.setup(UART_ID,9600,8,uart.PAR_NONE,uart.STOP_1)
+
+
+sys.reguart(1,read1)
+--配置并且打开串口1
+uart.setup(1,9600,8,uart.PAR_NONE,uart.STOP_1)
+sys.timer_loop_start(DS_HCHO_Data_request,3000)
+
+sys.reguart(2,read2)
+--配置并且打开串口2
+uart.setup(2,9600,8,uart.PAR_NONE,uart.STOP_1)
 
 lcd.setInfo("设备初始化中")
 
 sys.timer_loop_start(statusChk,2000)
-
---set uart1 to commnunicate to HCHO sensors
-sys.timer_loop_start(uart1check,30000)
 
 sys.timer_loop_start(dataUpload,120000)
 
@@ -271,8 +298,3 @@ end
 --pins.set(false,pincfg.PIN24)
 
 webRequest.connect()
-
-
---qrc = ""
---qrl = 841
---lcd.qrCodeDisp(qrc,qrl)
