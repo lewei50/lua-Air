@@ -1,0 +1,12 @@
+Field=Comment~String~Comment~100|Field=Description~String~Description~100|Field=Designator~String~Designator~100|Field=Footprint~String~Footprint~100|Field=LibRef~String~LibRef~100|Field=Quantity~Integer~Quantity~100|ReportField=Currency~<none>|ReportField=ProductionQuantity~1|ReportField=ProjectFileName~lw-skit.PrjPCB|ReportField=ProjectFullPath~C:\电子\1.ESP-CODE-MY\PCB\lw-skit-S1\lw-skit-201708\lw-skit.PrjPCB|ReportField=Title~Bill of Materials For Project [lw-skit.PrjPCB] (No PCB Document Selected)|ReportField=TotalQuantity~13|ReportField=ReportTime~18:58:51|ReportField=ReportDate~2017/8/28|ReportField=ReportDateTime~2017/8/28 18:58:51|ReportField=OutputName~Bill of Materials|ReportField=OutputType~BOM_PartType|ReportField=GeneratorName~BOM|ReportField=GeneratorDescription~Bill of Materials|ReportField=VariantName~None|ReportField=Address1~|ReportField=Address2~|ReportField=Address3~|ReportField=Address4~|ReportField=Application_BuildNumber~|ReportField=ApprovedBy~|ReportField=Author~|ReportField=CheckedBy~|ReportField=CompanyName~|ReportField=CurrentDate~2017/8/28|ReportField=CurrentTime~18:51:32|ReportField=Date~|ReportField=DocumentFullPathAndName~C:\电子\1.ESP-CODE-MY\PCB\lw-skit-S1\lw-skit-201708\lw-skit.SchDoc|ReportField=DocumentName~lw-skit.SchDoc|ReportField=DocumentNumber~|ReportField=DrawnBy~|ReportField=Engineer~|ReportField=ImagePath~|ReportField=ModifiedDate~2017/8/28|ReportField=Organization~|ReportField=ProjectName~lw-skit.PrjPCB|ReportField=Revision~|ReportField=Rule~|ReportField=SheetNumber~|ReportField=SheetTotal~|ReportField=Time~|ReportField=Title~|ReportField=DataSourceFileName~lw-skit.PrjPCB|ReportField=DataSourceFullPath~C:\电子\1.ESP-CODE-MY\PCB\lw-skit-S1\lw-skit-201708\lw-skit.PrjPCB
+HMI|XH2.54-4P|J1|XH2.54_4P|XH2.54-4P|1
+SIP20||J2|DB-1X20|SIP20|1
+SIP4||J3|DB-1X4|SIP4|1
+SI7021||J5, J8|DB-1X4|SIP4|2
+GY-302/BH1750||J6|DB-1X4|SIP4|1
+GY-68/BMP180||J7|DB-1X4|SIP4|1
+PM2.5-A4|FPC-1.27-8P|J10|1.27*8|FPC-1.27-8P|1
+SIP12||J11, J12|DB-1X12|SIP12|2
+AIR200_S1|AIR200_S1|M1|AIR200-S1|AIR200_S1|1
+10K|Res0603|R1|RES-SMD-0603|Res0603|1
+SET|按键开关立式|S1|upkey|SW_KEY_L|1

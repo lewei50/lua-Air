@@ -1,15 +1,57 @@
-2017/11/3 YNM-3000-1 datasheet
-          Designed for : 
-          1.Air202 S5: 
-            https://item.taobao.com/item.htm?spm=a1z10.1-c-s.w5003-17290146869.24.441b17e7sZj7EC&id=556521401934&scene=taobao_shop
-          2.Nodemcu:
-          3.USART HMI:	https://item.taobao.com/item.htm?spm=a1z0d.6639537.1997196601.281.795ecbc6md2Nu4&id=520074022889
-          4.SI7021	
-          5.GY-68 	BMP180气压
-          6.GY-302	BH1750光强
-          7.益杉A4/攀藤G5	PM25
-          8.S8 0053	CO2
-          9.DS-CO2-20 	CO2
-          10.HH-HCHO-M	甲醛
-          11.WZ-S	甲醛
-          12.DS-HCHO	甲醛
+
+github地址：[https://github.com/lewei50/lua-Air/tree/master/board][1]
+
+所有的文件都是底板文件，基本都是插针组成的，有能力的可以直接JLC打板（很便宜），然后回来自己焊接，体验一下原汁原味DIY的乐趣。每个教程除了底板以外的东西都可以直接TB获取。
+
+# YNM-3000-1 （recommend）
+
+合宙 air202 作为主控 的气体检测万用版。
+板子介绍：[YNM-3000-1板子介绍][2]
+
+![YNM-3000-1板子照片][3]
+
+**支持如下传感器**
+ - SI7021	 
+ - GY-68 	
+ - BMP180气压 GY-302	
+ - BH1750光强 
+ - 益杉A4/攀藤G5	
+ - PM25 
+ - S8 0053	CO2 
+ - DS-CO2-20 	CO2 
+ - HH-HCHO-M	
+ - 甲醛 WZ-S	
+ - 甲醛 DS-HCHO	甲醛
+
+
+
+# AIR200-S1
+合宙air200 作为主控的气体检测板子
+
+![AIR200-S1底板][4]
+
+相关教程：[AIR200-S1教程][5]
+
+# obsolete
+之前做过的很多气体检测的板子，现在已经不维护了，但是还可以用。
+
+
+### 1 DustSensor2016-4-3
+
+
+![甲醛在线检测设备][6]
+
+nodemcu（标准版本） 甲醛在线监测仪，配5110屏幕（二手）。
+当时主要想做一个廉价的wifi甲醛检测仪。
+
+配套教程
+[大人的玩具：甲醛实检测之物联网应用][7]
+
+
+  [1]: https://github.com/lewei50/lua-Air/tree/master/board
+  [2]: http://www.jianshu.com/p/9097f54e2594
+  [3]: http://doc-resources.lewei50.com/lewei50/img/ug25-20171107-1.jpg
+  [4]: http://doc-resources.lewei50.com/lewei50/img/LuaAir-20171115-2.jpg
+  [5]: http://www.jianshu.com/p/a4f0523c3447?utm_source=desktop&utm_medium=timeline
+  [6]: http://doc-resources.lewei50.com/lewei50/img/LuaAir-20171115-1.jpg
+  [7]: https://post.smzdm.com/p/443892/
