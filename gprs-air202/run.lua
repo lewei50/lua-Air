@@ -142,6 +142,7 @@ local function parse2(data)
                          if(hcho~=nil)then
 					                    lcd.setText("HCHO",hcho.."mg/m3")
 					               end
+                         hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10) ..tostring(hcho_orig%10)
                     end
                end
           end
@@ -149,7 +150,7 @@ local function parse2(data)
 					lcd.setText("pm25",pm25..result)
 					lcd.setText("aqi",aqi)
      end
-	--HH-HCHO-M sensor decode
+	--HH-HCHO-M sensor decode / Dart HCHO
 	if(((string.byte(data,1)==0xff) and(string.byte(data,2)==0x17))) then
 		hcho_orig = (string.byte(data,5)*256+string.byte(data,6))
 		hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)
