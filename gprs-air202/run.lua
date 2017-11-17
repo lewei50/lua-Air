@@ -4,7 +4,7 @@ require"webRequest"
 local showQRCode = false
 local bIsPms5003 = false
 local bIsPms5003s = false
-local aqi,pm25,hcho = nil
+local aqi,pm25,hcho,co2 = nil
 
 --串口ID,1对应uart1
 --如果要修改为uart2，把UART_ID赋值为2即可
@@ -14,6 +14,9 @@ local rdbuf = ""
 local rdbuf1 = ""
 local rdbuf2 = ""
 
+--0 DS_HCHO,1 SenseAir S8
+local uart1SensorId = 0
+local uart1SensorNum = 2
 
 --[[
 函数名：print
@@ -25,13 +28,31 @@ local function print(...)
 	_G.print("[run]",...)
 end
 
+local function changeUart1SensorId()
+	uart1SensorId = uart1SensorId +1
+	uart1SensorId = uart1SensorId %uart1SensorNum
+end
 
 
 local function DS_HCHO_Data_request()
 	uart.write(1,string.char(0x42)..string.char(0x4d)..string.char(0x01)..string.char(0x00)..string.char(0x00)..string.char(0x00)..string.char(0x90))
+	sys.timer_start(changeUart1SensorId,2000)
+end
+
+local function SENSEAIR_S8_Data_request()
+	uart.write(1,string.char(0xfe)..string.char(0x04)..string.char(0x00)..string.char(0x03)..string.char(0x00)..string.char(0x01)..string.char(0xd5)..string.char(0xc5))
+	sys.timer_start(changeUart1SensorId,2000)
 end
 
 
+local function UART1_Data_request()
+	print("uart1SensorId:"..uart1SensorId)
+	if(uart1SensorId == 0) then
+		DS_HCHO_Data_request()
+	elseif(uart1SensorId == 1)then
+		SENSEAIR_S8_Data_request()
+	end
+end
 
 
 local function calcAQI(pNum)
@@ -63,7 +84,8 @@ end
 ]]
 
 local function parse1(data)
-	
+	print("parse1")
+	sys.timer_stop(changeUart1SensorId)
 	--DS HCHO sensor decode (from uart1)
 	if((string.byte(data,1)==0x42) and(string.byte(data,2)==0x4d) and(string.byte(data,3)==0x08) and(string.byte(data,4)==0x14)) then
 		unit_byte = string.byte(data,5)
@@ -114,11 +136,34 @@ local function parse1(data)
 		end
 		
 	end
+	
+	--SenseAir S8 decode
+	if((string.byte(data,1)==0xfe) and(string.byte(data,2)==0x04) and(string.byte(data,3)==0x02)) then
+		data_byte_h = string.byte(data,4)
+		data_byte_l = string.byte(data,5)
+		
+		co2 = data_byte_h*256+data_byte_l
+		print("CO2:"..co2)
+		if(co2~=nil)then
+			if(hcho~=nil)then
+				if(lcd.getCurrentPage()~=6) then
+					lcd.setPage(6)
+				end
+			else
+				if(lcd.getCurrentPage()~=5) then
+					lcd.setPage(5)
+				end
+			end
+			lcd.setText("CO2",co2.."ppm")
+		end
+	end
+	
+	
 	rdbuf1 = ""
 end
 
 local function parse2(data)
-	
+		print("parse2")
 	if not data then return end	
 	if((((string.byte(data,1)==0x42) and(string.byte(data,2)==0x4d)) or ((string.byte(data,1)==0x32) and(string.byte(data,2)==0x3d))) and string.byte(data,13)~=nil and string.byte(data,14)~=nil)  then
           if((string.byte(data,1)==0x32) and(string.byte(data,2)==0x3d)) then
@@ -155,8 +200,14 @@ local function parse2(data)
 		hcho_orig = (string.byte(data,5)*256+string.byte(data,6))
 		hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)
 		if(hcho~=nil)then
-			if(lcd.getCurrentPage()~=4) then
-				lcd.setPage(4)
+			if(co2~=nil)then
+				if(lcd.getCurrentPage()~=6) then
+					lcd.setPage(6)
+				end
+			else
+				if(lcd.getCurrentPage()~=4) then
+					lcd.setPage(4)
+				end
 			end
 			lcd.setText("HCHO",hcho.."mg/m3")
 		end
@@ -237,6 +288,7 @@ function dataUpload()
 	if(aqi~=nil)then webRequest.appendSensorValue("AQI",aqi) end
 	if(pm25~=nil)then webRequest.appendSensorValue("dust",pm25) end
 	if(hcho~=nil)then webRequest.appendSensorValue("hcho",hcho) end
+	if(co2~=nil)then webRequest.appendSensorValue("CO2",co2) end
 	temp = si7021.getTemp()
 	hum = si7021.getHum()
 	if(temp~=nil and hum~=nil) then
@@ -258,7 +310,7 @@ pm.wake("run")
 sys.reguart(1,read1)
 --配置并且打开串口1
 uart.setup(1,9600,8,uart.PAR_NONE,uart.STOP_1)
-sys.timer_loop_start(DS_HCHO_Data_request,3000)
+sys.timer_loop_start(UART1_Data_request,5000)
 
 sys.reguart(2,read2)
 --配置并且打开串口2
