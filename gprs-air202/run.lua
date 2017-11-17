@@ -162,6 +162,7 @@ local function parse2(data)
 		end
 		--get more accurate date to lewei end
 		hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)..tostring(hcho_orig%10)
+		print("HCHO:"..hcho)
 	end
 	rdbuf2 = ""
 end
@@ -172,21 +173,6 @@ end
 参数  ：无
 返回值：无
 ]]
-local function read()
-	local data = ""
-	--底层core中，串口收到数据时：
-	--如果接收缓冲区为空，则会以中断方式通知Lua脚本收到了新数据；
-	--如果接收缓冲器不为空，则不会通知Lua脚本
-	--所以Lua脚本中收到中断读串口数据时，每次都要把接收缓冲区中的数据全部读出，这样才能保证底层core中的新数据中断上来，此read函数中的while语句中就保证了这一点
-	while true do		
-		data = uart.read(UART_ID,"*l",0)
-		if not data or string.len(data) == 0 then break end
-		--打开下面的打印会耗时
-		--print("read:",data,common.binstohexs(data))
-		rdbuf = rdbuf..data	
-	end
-	sys.timer_start(parse,50,rdbuf)
-end
 
 local function read1()
 	local data = ""
