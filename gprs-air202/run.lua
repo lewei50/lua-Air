@@ -83,6 +83,63 @@ end
 		data：所有未处理的数据
 ]]
 
+local function parse2(data)
+		print("parse2")
+	if not data then return end	
+	if((((string.byte(data,1)==0x42) and(string.byte(data,2)==0x4d)) or ((string.byte(data,1)==0x32) and(string.byte(data,2)==0x3d))) and string.byte(data,13)~=nil and string.byte(data,14)~=nil)  then
+          if((string.byte(data,1)==0x32) and(string.byte(data,2)==0x3d)) then
+               --Teetc.com
+               pm25 = (string.byte(data,7)*256+string.byte(data,8))
+          else
+               pm25 = (string.byte(data,13)*256+string.byte(data,14))
+               if(string.byte(data,29) ~=nil and string.byte(data,30)~=nil)then
+                    if(string.byte(data,29) > 0x50 and string.byte(data,30) == 0x00)then
+                         hcho = nil
+                         bIsPms5003 = true
+                         bIsPms5003s = false
+                    else
+                         bIsPms5003 = false
+                         bIsPms5003s = true
+                         if(lcd.getCurrentPage()~=4) then
+                         	lcd.setPage(4)
+                         end
+                         hcho_orig = (string.byte(data,29)*256+string.byte(data,30))
+                         hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)
+                         if(hcho~=nil)then
+					                    lcd.setText("HCHO",hcho.."mg/m3")
+					               end
+                         hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10) ..tostring(hcho_orig%10)
+                    end
+               end
+          end
+          aqi,result = calcAQI(pm25)
+					lcd.setText("pm25",pm25..result)
+					lcd.setText("aqi",aqi)
+     end
+	--HH-HCHO-M sensor decode / Dart HCHO
+	if(((string.byte(data,1)==0xff) and(string.byte(data,2)==0x17))) then
+		hcho_orig = (string.byte(data,5)*256+string.byte(data,6))
+		hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)
+		if(hcho~=nil)then
+			if(co2~=nil)then
+				if(lcd.getCurrentPage()~=6) then
+					lcd.setPage(6)
+				end
+			else
+				if(lcd.getCurrentPage()~=4) then
+					lcd.setPage(4)
+				end
+			end
+			lcd.setText("HCHO",hcho.."mg/m3")
+		end
+		--get more accurate date to lewei end
+		hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)..tostring(hcho_orig%10)
+		print("HCHO:"..hcho)
+	end
+	rdbuf2 = ""
+end
+
+
 local function parse1(data)
 	print("parse1")
 	sys.timer_stop(changeUart1SensorId)
@@ -162,62 +219,6 @@ local function parse1(data)
 	rdbuf1 = ""
 	--测试是否单发送的传感器接到了uart1上
 	parse2(data)
-end
-
-local function parse2(data)
-		print("parse2")
-	if not data then return end	
-	if((((string.byte(data,1)==0x42) and(string.byte(data,2)==0x4d)) or ((string.byte(data,1)==0x32) and(string.byte(data,2)==0x3d))) and string.byte(data,13)~=nil and string.byte(data,14)~=nil)  then
-          if((string.byte(data,1)==0x32) and(string.byte(data,2)==0x3d)) then
-               --Teetc.com
-               pm25 = (string.byte(data,7)*256+string.byte(data,8))
-          else
-               pm25 = (string.byte(data,13)*256+string.byte(data,14))
-               if(string.byte(data,29) ~=nil and string.byte(data,30)~=nil)then
-                    if(string.byte(data,29) > 0x50 and string.byte(data,30) == 0x00)then
-                         hcho = nil
-                         bIsPms5003 = true
-                         bIsPms5003s = false
-                    else
-                         bIsPms5003 = false
-                         bIsPms5003s = true
-                         if(lcd.getCurrentPage()~=4) then
-                         	lcd.setPage(4)
-                         end
-                         hcho_orig = (string.byte(data,29)*256+string.byte(data,30))
-                         hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)
-                         if(hcho~=nil)then
-					                    lcd.setText("HCHO",hcho.."mg/m3")
-					               end
-                         hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10) ..tostring(hcho_orig%10)
-                    end
-               end
-          end
-          aqi,result = calcAQI(pm25)
-					lcd.setText("pm25",pm25..result)
-					lcd.setText("aqi",aqi)
-     end
-	--HH-HCHO-M sensor decode / Dart HCHO
-	if(((string.byte(data,1)==0xff) and(string.byte(data,2)==0x17))) then
-		hcho_orig = (string.byte(data,5)*256+string.byte(data,6))
-		hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)
-		if(hcho~=nil)then
-			if(co2~=nil)then
-				if(lcd.getCurrentPage()~=6) then
-					lcd.setPage(6)
-				end
-			else
-				if(lcd.getCurrentPage()~=4) then
-					lcd.setPage(4)
-				end
-			end
-			lcd.setText("HCHO",hcho.."mg/m3")
-		end
-		--get more accurate date to lewei end
-		hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)..tostring(hcho_orig%10)
-		print("HCHO:"..hcho)
-	end
-	rdbuf2 = ""
 end
 
 --[[
