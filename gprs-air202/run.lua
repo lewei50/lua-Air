@@ -160,6 +160,8 @@ local function parse1(data)
 	
 	
 	rdbuf1 = ""
+	--测试是否单发送的传感器接到了uart1上
+	parse2(data)
 end
 
 local function parse2(data)

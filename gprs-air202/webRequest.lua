@@ -158,9 +158,9 @@ local function reconn()
 	else
 		reconncnt,reconncyclecnt = 0,reconncyclecnt+1
 		if reconncyclecnt >= RECONN_CYCLE_MAX_CNT then
-			--sys.restart("connect fail")
 			print("could not get QRCode,I give up")
 			lcd.setText("info","∑≈∆˙÷ÿ¡¨")
+			sys.restart("connect fail")
 		end
 		sys.timer_start(reconn,RECONN_CYCLE_PERIOD*1000)
 	end
