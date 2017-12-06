@@ -1,7 +1,7 @@
 module(...,package.seeall)
 require"net"
 
-local i2cid = 1
+local i2cid = 2
 local bInited = false
 
 
@@ -54,7 +54,8 @@ end
 
 function getHum()
 	if(h~=nil)then
-	return string.sub(h, 1, 2).."."..string.sub(h, 3, 3)
+	--return string.sub(h, 1, 2).."."..string.sub(h, 3, 3)
+	return  tostring(h/100).."."..tostring(h/10%10)
 	else
 	return 0
 	end
@@ -62,7 +63,8 @@ end
 
 function getTemp()
 	if(t~=nil)then
-	return string.sub(t, 1, 2).."."..string.sub(t, 3, 3)
+	--return string.sub(t, 1, 2).."."..string.sub(t, 3, 3)
+	return  tostring(t/100).."."..tostring(t/10%10)
 	else
 	return 0
 	end
