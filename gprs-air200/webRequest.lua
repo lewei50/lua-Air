@@ -13,6 +13,8 @@ module(...,package.seeall)
 local ssub,schar,smatch,sbyte,slen = string.sub,string.char,string.match,string.byte,string.len
 --测试时请搭建自己的服务器
 local SCK_IDX,PROT,ADDR,PORT = 1,"TCP","www.lewei50.com",80
+--"www.lewei50.com",80
+--"114.55.54.60",9971
 --linksta:与后台的socket连接状态
 local linksta
 --是否成功连接过服务器
@@ -145,7 +147,7 @@ end
 返回值：无
 ]]
 local function reconn()
-	print("reconn",reconncnt,conning,reconncyclecnt)
+	print("发起重连",reconncnt,conning,reconncyclecnt)
 	--conning表示正在尝试连接后台，一定要判断此变量，否则有可能发起不必要的重连，导致reconncnt增加，实际的重连次数减少
 	if conning then return end
 	--一个连接周期内的重连
@@ -158,9 +160,9 @@ local function reconn()
 	else
 		reconncnt,reconncyclecnt = 0,reconncyclecnt+1
 		if reconncyclecnt >= RECONN_CYCLE_MAX_CNT then
-			--sys.restart("connect fail")
 			print("could not get QRCode,I give up")
 			lcd.setText("info","放弃重连")
+			sys.restart("connect fail")
 		end
 		sys.timer_start(reconn,RECONN_CYCLE_PERIOD*1000)
 	end
@@ -286,6 +288,7 @@ end
 返回值：无
 ]]
 function connect()
+	print("发起连接")
 	socket.connect(SCK_IDX,PROT,ADDR,PORT,ntfy,rcv)
 	conning = true
 end

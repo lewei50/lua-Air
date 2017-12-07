@@ -64,6 +64,7 @@ end
 function getTemp()
 	if(t~=nil)then
 	--return string.sub(t, 1, 2).."."..string.sub(t, 3, 3)
+	if(t<0) then return  "-"..tostring(-t/100).."."..tostring(-t/10%10) end
 	return  tostring(t/100).."."..tostring(t/10%10)
 	else
 	return 0
