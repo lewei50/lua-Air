@@ -64,6 +64,7 @@ end
 function getTemp()
 	if(t~=nil)then
 	--return string.sub(t, 1, 2).."."..string.sub(t, 3, 3)
+	if(t<0)then return "-"..tostring(-t/100).."."..tostring(-t/10%10) end
 	return  tostring(t/100).."."..tostring(t/10%10)
 	else
 	return 0
@@ -76,7 +77,7 @@ local function readTemp()
 	if(string.byte(dataT, 1)~= nil and string.byte(dataT, 2)~=nil)then
 	  UT = string.byte(dataT, 1) * 256 + string.byte(dataT, 2)
 	  t = ((UT*17572+65536/2)/65536 - 4685)
-	  --print("got t"..t)
+	  print("got t"..t)
 	  UT = nil
 	  dataT = nil
   end
