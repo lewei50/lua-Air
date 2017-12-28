@@ -1,7 +1,7 @@
 module(...,package.seeall)
 require"net"
 
-local i2cid = 2
+local i2cid = 1
 local bInited = false
 
 
