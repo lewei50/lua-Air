@@ -72,7 +72,7 @@ local function calcAQI(pNum)
           end
      end
      --aqiNum = (ihigh[aqiLevel]-ilow[aqiLevel])/(chigh[aqiLevel]-clow[aqiLevel])*(pNum-clow[aqiLevel])+ilow[aqiLevel]
-     aqiNum = (laqi[aqiLevel]-laqi[aqiLevel-1])/(ipm25[aqiLevel]-ipm25[aqiLevel-1])*(pNum-ipm25[aqiLevel-1])+laqi[aqiLevel-1]
+     aqiNum = (laqi[aqiLevel]-laqi[aqiLevel-1])*100/(ipm25[aqiLevel]-ipm25[aqiLevel-1])*(pNum-ipm25[aqiLevel-1])/100+laqi[aqiLevel-1]
      return aqiNum,result[aqiLevel-1]
 end
 
