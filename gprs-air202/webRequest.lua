@@ -290,7 +290,7 @@ function getIccid()
 		end
 		PostData = PostData.."}"
 		data = "POST /api/v1/gateway/updatebysn/"..misc.getimei().." HTTP/1.1\r\nHost: www.lewei50.com\r\nContent-Length: " .. string.len(PostData) .. "\r\n\r\n"..PostData .. "\r\n"
-		lcd.setInfo(iccid)
+		--lcd.setInfo(iccid)
 		snd(data)
 		sys.timer_stop(getIccid)
 	end
