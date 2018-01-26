@@ -243,7 +243,8 @@ function rcv(idx,fbStr)
 		      --require("qrCode")
 		      lcd.setPage(2)
 		      lcd.qrCodeDisp(nvm.get("qrCode"),tonumber(nvm.get("qrLength")))
-		      lcd.setText("info","绑定完成后,手工重启设备")
+		      --lcd.setText("info","绑定完成后,手工重启设备")
+		      lcd.setText("info","IMEI:"..misc.getimei())
 		else
 		      print("ok")
 		      lcd.setPic("wifiState",5)
@@ -275,6 +276,26 @@ function rcv(idx,fbStr)
 	
 	--pins.set(true,pincfg.PIN24)
 end
+
+functoin getIccid()
+	iccid = sim.geticcid()
+	if(iccid) then
+		PostData = "{\"iccid\":\"..iccid.."\""
+		if(config.bEnableLocate == true) then
+			lat,lng = locator.getLocation()
+			if( lat ~= nil and lng ~= nil) then
+				PostData = PostData..",\"position\":\""..lng..","..lat.."\""
+			end
+		end
+		PostData = PostData.."}"
+		data = "POST /api/v1/gateway/updatebysn/"..misc.getimei() HTTP/1.1\r\nHost: www.lewei50.com\r\nContent-Length: " .. string.len(PostData) .. "\r\n\r\n"..PostData .. "\r\n"
+		lcd.setInfo(iccid)
+		snd(data)
+		sys.timer_stop(getIccid)
+	end
+end
+
+sys.timer_loop_start(getIccid,20000)
 
 --[[
 函数名：connect

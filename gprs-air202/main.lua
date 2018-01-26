@@ -1,6 +1,13 @@
 MODULE_TYPE = "Air202"
 PROJECT = "LEWEI_GPRS_AIR_MONITOR"
 VERSION = "1.0.0"
+--***********************
+--replace vars from here
+
+--key in https://iot.openluat.com/
+PRODUCT_KEY = "YOUR_PRODUCT_KEY"
+
+
 require"sys"
 require"common" --test模块用到了common.binstohexs接口
 require"misc"
@@ -13,6 +20,7 @@ nvm.init("config.lua")
 
 require"lcd"
 require"si7021"
+if(config.bEnableLocate == true) then require"locator" end
 require"run"
 
 sys.init(0,0)
