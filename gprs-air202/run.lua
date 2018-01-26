@@ -333,8 +333,12 @@ _G.print("qrCode = "..nvm.get("qrCode"))
 _G.print("qrLength = "..nvm.get("qrLength"))
 else
 	--get qrCode
-	--sys.timer_stop(statusChk)
+	--
 	
+end
+
+function stopStatusCheck()
+	sys.timer_stop(statusChk)
 end
 
 --pins.set(false,pincfg.PIN24)

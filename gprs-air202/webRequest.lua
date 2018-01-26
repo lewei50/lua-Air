@@ -244,7 +244,7 @@ function rcv(idx,fbStr)
 		      lcd.setPage(2)
 		      lcd.qrCodeDisp(nvm.get("qrCode"),tonumber(nvm.get("qrLength")))
 		      --lcd.setText("info","绑定完成后,手工重启设备")
-		      sys.timer_stop(statusChk)
+		      run.stopStatusCheck()
 		      lcd.setText("info","IMEI:"..misc.getimei())
 		else
 		      print("ok")
