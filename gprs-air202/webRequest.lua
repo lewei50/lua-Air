@@ -277,7 +277,7 @@ function rcv(idx,fbStr)
 	--pins.set(true,pincfg.PIN24)
 end
 
-functoin getIccid()
+function getIccid()
 	iccid = sim.geticcid()
 	if(iccid) then
 		PostData = "{\"iccid\":\"..iccid.."\""
