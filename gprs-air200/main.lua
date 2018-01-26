@@ -7,7 +7,7 @@ VERSION = "1.0.0"
 
 --key in https://iot.openluat.com/
 --PRODUCT_KEY = "YOUR_PRODUCT_KEY"
-PRODUCT_KEY = "k70H7ZT2AG6kKQofPmkaKKLbR2O5LuMo"
+PRODUCT_KEY = "epFaKbBz7nIidfBdom0B3i1lPifZnSx3"
 
 require"sys"
 require"common" --test模块用到了common.binstohexs接口
