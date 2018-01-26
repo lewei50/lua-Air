@@ -3,11 +3,8 @@ PROJECT = "LEWEI_GPRS_AIR_MONITOR"
 VERSION = "1.0.0"
 --***********************
 --replace vars from here
-
 --key in https://iot.openluat.com/
 PRODUCT_KEY = "YOUR_PRODUCT_KEY"
-
-
 require"sys"
 require"common" --test模块用到了common.binstohexs接口
 require"misc"

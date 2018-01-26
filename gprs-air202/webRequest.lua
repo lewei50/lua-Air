@@ -295,7 +295,7 @@ function getIccid()
 	end
 end
 
-sys.timer_loop_start(getIccid,60000)
+sys.timer_loop_start(getIccid,80000)
 
 --[[
 º¯ÊıÃû£ºconnect
