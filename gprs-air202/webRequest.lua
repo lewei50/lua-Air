@@ -280,7 +280,7 @@ end
 function getIccid()
 	iccid = sim.geticcid()
 	if(iccid) then
-		PostData = "{\"iccid\":\"..iccid.."\""
+		PostData = "{\"iccid\":\""..iccid.."\""
 		if(config.bEnableLocate == true) then
 			lat,lng = locator.getLocation()
 			if( lat ~= nil and lng ~= nil) then
@@ -288,14 +288,14 @@ function getIccid()
 			end
 		end
 		PostData = PostData.."}"
-		data = "POST /api/v1/gateway/updatebysn/"..misc.getimei() HTTP/1.1\r\nHost: www.lewei50.com\r\nContent-Length: " .. string.len(PostData) .. "\r\n\r\n"..PostData .. "\r\n"
+		data = "POST /api/v1/gateway/updatebysn/"..misc.getimei().." HTTP/1.1\r\nHost: www.lewei50.com\r\nContent-Length: " .. string.len(PostData) .. "\r\n\r\n"..PostData .. "\r\n"
 		lcd.setInfo(iccid)
 		snd(data)
 		sys.timer_stop(getIccid)
 	end
 end
 
-sys.timer_loop_start(getIccid,20000)
+sys.timer_loop_start(getIccid,60000)
 
 --[[
 º¯ÊýÃû£ºconnect
