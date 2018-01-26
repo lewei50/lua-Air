@@ -246,6 +246,7 @@ function rcv(idx,fbStr)
 		      lcd.setPage(2)
 		      lcd.qrCodeDisp(nvm.get("qrCode"),tonumber(nvm.get("qrLength")))
 		      --lcd.setText("info","绑定完成后,手工重启设备")
+		      run.stopStatusCheck()
 		      lcd.setText("info","IMEI:"..misc.getimei())
 		else
 		      print("ok")
@@ -292,7 +293,7 @@ function getIccid()
 		end
 		PostData = PostData.."}"
 		data = "POST /api/v1/gateway/updatebysn/"..misc.getimei().." HTTP/1.1\r\nHost: www.lewei50.com\r\nContent-Length: " .. string.len(PostData) .. "\r\n\r\n"..PostData .. "\r\n"
-		lcd.setInfo(iccid)
+		--lcd.setInfo(iccid)
 		snd(data)
 		sys.timer_stop(getIccid)
 	end
