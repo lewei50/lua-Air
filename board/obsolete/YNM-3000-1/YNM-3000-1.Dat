@@ -1,0 +1,19 @@
+Field=Comment~String~Comment~100|Field=Description~String~Description~100|Field=Designator~String~Designator~100|Field=Footprint~String~Footprint~100|Field=LibRef~String~LibRef~100|Field=Quantity~Integer~Quantity~100|ReportField=Currency~<none>|ReportField=ProductionQuantity~1|ReportField=ProjectFileName~YNM-3000-1.PrjPCB|ReportField=ProjectFullPath~D:\电子\1.ESP-CODE-MY\2.Luat\3.luat-PCB\4.YNM-3000-1\YNM-3000-1\YNM-3000-1.PrjPCB|ReportField=Title~Bill of Materials For Project [YNM-3000-1.PrjPCB] (No PCB Document Selected)|ReportField=TotalQuantity~37|ReportField=ReportTime~20:46:08|ReportField=ReportDate~2017/11/2|ReportField=ReportDateTime~2017/11/2 20:46:08|ReportField=OutputName~Bill of Materials|ReportField=OutputType~BOM_PartType|ReportField=GeneratorName~BOM|ReportField=GeneratorDescription~Bill of Materials|ReportField=VariantName~None|ReportField=Address1~|ReportField=Address2~|ReportField=Address3~|ReportField=Address4~|ReportField=Application_BuildNumber~|ReportField=ApprovedBy~|ReportField=Author~|ReportField=CheckedBy~|ReportField=CompanyName~|ReportField=CurrentDate~2017/11/2|ReportField=CurrentTime~20:46:06|ReportField=Date~|ReportField=DocumentFullPathAndName~D:\电子\1.ESP-CODE-MY\2.Luat\3.luat-PCB\4.YNM-3000-1\YNM-3000-1\YNM-3000-1.SchDoc|ReportField=DocumentName~YNM-3000-1.SchDoc|ReportField=DocumentNumber~|ReportField=DrawnBy~|ReportField=Engineer~|ReportField=ImagePath~|ReportField=ModifiedDate~2017/11/2|ReportField=Organization~|ReportField=ProjectName~YNM-3000-1.PrjPCB|ReportField=Revision~|ReportField=Rule~|ReportField=SheetNumber~|ReportField=SheetTotal~|ReportField=Time~201711|ReportField=Title~LW-AirKit-A|ReportField=DataSourceFileName~YNM-3000-1.PrjPCB|ReportField=DataSourceFullPath~D:\电子\1.ESP-CODE-MY\2.Luat\3.luat-PCB\4.YNM-3000-1\YNM-3000-1\YNM-3000-1.PrjPCB
+1000UF|体积（10*10.2MM）|C1, C12|SMD-EC-F10|SMD-EC-F10|2
+104|Cap0603|C2, C3, C4, C5, C7, C8, C9, C10, C11|CAP-SMD-0603|Cap0603|9
+106|CAP-3528|C6|EC3528B|CAP-3528|1
+470uF/16V|体积（8*10.2MM）|C13, C14, C15, C16|SMD-EC-F8|SMD-EC-F8|4
+USB_M|Micro/Mini USB|J1|USB_MICRO|USB_M|1
+DIP-1X08|Header, 8-Pin|J6|1.27*8|DIP-1X08|1
+DIP-1X04|Header, 4-Pin|J7|XH-1X04-2.5|DIP-1X04|1
+SIP4||J8, J9, J10|DB-1X4|SIP4|3
+SIP7_2.0||J13, J15|SIP_2.0_7P|SIP7_2.0|2
+SIP5_2.0||J14|SIP_2.0_5P|SIP5_2.0|1
+SIP15-1.753||J21, J22, J23, J24|DB-1X15-1.753|SIP15-1.753|4
+SIP5||J27, J28|DB-1X5|SIP5|2
+LCD||LCD|LCD|LCD|1
+NodeMCU DevKit v1.0||NodeMCU|NodeMCU DevKit v1.0 - Inside Labels|NodeMCU DevKit v1.0|1
+LM1117-3.3||P11|SOT-223|LM1117|1
+PM25_3||PM25|PM25_3|PM25_3|1
+S5||U1|S5|S5|1
+S8-0053||U2|S8-0053|S8-0053|1
