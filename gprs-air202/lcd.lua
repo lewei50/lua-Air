@@ -5,11 +5,13 @@ module(...,package.seeall)
 串口LCD屏幕的显示控制
 ]]
 
-local LCD_UART_ID = 2
+local LCD_UART_ID = 1
 local currentPage = 0
 local pageLock = false
 local testDot = false
 local bEnableRefresh = true
+local dName = ""
+local wifiState=4
 
 function getCurrentPage()
 	return currentPage
@@ -35,7 +37,41 @@ local rdbuf = ""
 返回值：无
 ]]
 local function print(...)
-	_G.print("[LCD]",...)
+	--_G.print("[LCD]",...)
+end
+
+function showPage(pid)
+     if(currentPage ~= pid) then
+          write("page "..pid)
+          write("page "..pid)
+          currentPage= pid
+     end
+end
+
+function refreshPage()
+	print("refresh page")
+	if(Sensors.data()["Hum"]) then pg = 1 end
+	if(Sensors.data()["HCHO"]) then pg = 4 end
+	if(Sensors.data()["CO2"]) then
+	    if(pg==4) then
+	    --co2 + hcho
+	         pg = 6
+	    else
+	    --co2 only
+	         pg = 5
+	    end
+	end
+	showPage(pg)
+	setPic("wifiState",wifiState)
+	for k,v in pairs(Sensors.data()) do
+	    print(k,v,Sensors.units()[k])
+	    if(k=="Hum")then setText("hum",v..Sensors.units()[k]) end
+	    if(k=="Temp")then setText("temp",v..Sensors.units()[k]) end
+	    if(k=="pm25")then setText("pm25",v..Sensors.units()[k]) end
+	    if(k=="aqi")then setText("aqi",v..Sensors.units()[k]) end
+	    if(k=="HCHO")then setText("HCHO",v..Sensors.units()[k]) end
+	    if(k=="CO2")then setText("CO2",v..Sensors.units()[k]) end
+	end
 end
 
 --[[
@@ -64,6 +100,7 @@ end
 
 function setPage(id)
 	if(pageLock == false)then
+		write("page "..id)
 		write("page "..id)
 		currentPage = id
 	end
@@ -169,7 +206,7 @@ end
 --在开发“要求功耗低”的项目时，一定要想办法保证pm.wake("test")后，在不需要串口时调用pm.sleep("test")
 --pm.wake("test")
 --注册串口的数据接收函数，串口收到数据后，会以中断方式，调用read接口读取数据
-sys.reguart(LCD_UART_ID,read)
+--sys.reguart(LCD_UART_ID,read)
 --配置并且打开串口
 
-uart.setup(LCD_UART_ID,9600,8,uart.PAR_NONE,uart.STOP_1)
+--uart.setup(LCD_UART_ID,9600,8,uart.PAR_NONE,uart.STOP_1)

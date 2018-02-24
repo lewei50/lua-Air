@@ -25,7 +25,7 @@ end
 
 function updateRssi()
 	rssi = net.getrssi()
-	print("rssi:"..rssi)
+	--print("rssi:"..rssi)
 	if(rssi == 0)then
 		lcd.setPic("wifiState",4)
 	elseif(rssi>24)then
@@ -77,7 +77,7 @@ local function readTemp()
 	if(string.byte(dataT, 1)~= nil and string.byte(dataT, 2)~=nil)then
 	  UT = string.byte(dataT, 1) * 256 + string.byte(dataT, 2)
 	  t = ((UT*17572+65536/2)/65536 - 4685)
-	  print("got t"..t)
+	  --print("got t"..t)
 	  UT = nil
 	  dataT = nil
   end

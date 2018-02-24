@@ -1,14 +1,29 @@
 module(...,package.seeall)
-require"webRequest"
+--require"webRequest"
+require"http"
+require"common"
+require"Sensors"
+
+local ssub,schar,smatch,sbyte,slen = string.sub,string.char,string.match,string.byte,string.len
+--local ADDR,leweiUrl,PORT ="114.55.54.60","http://ug25.lewei50.com/api/V1/gateway/UpdateSensors/",9970
+local ADDR,leweiUrl,PORT ="ug25.lewei50.com","http://ug25.lewei50.com/api/V1/gateway/UpdateSensors/",80
+local httpclient
 
 local showQRCode = false
 local bIsPms5003 = false
 local bIsPms5003s = false
 local aqi,pm25,hcho,co2 = nil
 
+local bRefreshLcd = false
+
+local validDev = false 
+
+--0 data post,1 qrcode request,2 binding request,3 postion update,4 iccid update
+local requestType = 0
+
 --串口ID,1对应uart1
 --如果要修改为uart2，把UART_ID赋值为2即可
-local UART_ID = 2
+local UART_ID = 1
 --串口读到的数据缓冲区
 local rdbuf = ""
 local rdbuf1 = ""
@@ -28,6 +43,11 @@ local function print(...)
 	_G.print("[run]",...)
 end
 
+function setRequestType(id)
+	print("set requestType:"..requestType)
+	requestType = id
+end
+
 local function changeUart1SensorId()
 	uart1SensorId = uart1SensorId +1
 	uart1SensorId = uart1SensorId %uart1SensorNum
@@ -36,17 +56,41 @@ end
 
 local function DS_HCHO_Data_request()
 	uart.write(1,string.char(0x42)..string.char(0x4d)..string.char(0x01)..string.char(0x00)..string.char(0x00)..string.char(0x00)..string.char(0x90))
-	sys.timer_start(changeUart1SensorId,2000)
+	--sys.timer_start(changeUart1SensorId,2000)
+	--Ports.nextPort()
+	sys.timer_start(Ports.nextPort,300)
+	sys.timer_start(portCycle,300)
 end
 
 local function SENSEAIR_S8_Data_request()
 	uart.write(1,string.char(0xfe)..string.char(0x04)..string.char(0x00)..string.char(0x03)..string.char(0x00)..string.char(0x01)..string.char(0xd5)..string.char(0xc5))
-	sys.timer_start(changeUart1SensorId,2000)
+	sys.timer_start(DS_HCHO_Data_request,300)
 end
 
 
+function portCycle()
+	--print("PORT:"..Ports.getPort())
+	t = si7021.getTemp()
+	h = si7021.getHum()
+	--print("statusChk:",t,h)
+	if(h~=nil and t~=nil)then
+          if(Sensors.setSensorValue("Temp",t,"℃")) then bRefreshLcd = true end
+          if(Sensors.setSensorValue("Hum",h,"%")) then bRefreshLcd = true end
+  end
+	if(Ports.getPort()==0)then
+          --refresh lcd
+          if(bRefreshLcd)then
+               --Lcd.showPage(1)
+               lcd.refreshPage()
+               bRefreshLcd = false
+               --Ports.nextPort()
+          end
+  end
+  sys.timer_start(SENSEAIR_S8_Data_request,1000)
+end
+
 local function UART1_Data_request()
-	print("uart1SensorId:"..uart1SensorId)
+	--print("uart1SensorId:"..uart1SensorId)
 	if(uart1SensorId == 0) then
 		DS_HCHO_Data_request()
 	elseif(uart1SensorId == 1)then
@@ -84,7 +128,7 @@ end
 ]]
 
 local function parse2(data)
-		print("parse2")
+	--print("parse2")
 	if not data then return end	
 	if((((string.byte(data,1)==0x42) and(string.byte(data,2)==0x4d)) or ((string.byte(data,1)==0x32) and(string.byte(data,2)==0x3d))) and string.byte(data,13)~=nil and string.byte(data,14)~=nil)  then
           if((string.byte(data,1)==0x32) and(string.byte(data,2)==0x3d)) then
@@ -100,49 +144,54 @@ local function parse2(data)
                     else
                          bIsPms5003 = false
                          bIsPms5003s = true
-                         if(lcd.getCurrentPage()~=4) then
-                         	lcd.setPage(4)
-                         end
+                         --if(lcd.getCurrentPage()~=4) then
+                         	--lcd.setPage(4)
+                         --end
                          hcho_orig = (string.byte(data,29)*256+string.byte(data,30))
                          hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)
                          if(hcho~=nil)then
-					                    lcd.setText("HCHO",hcho.."mg/m3")
+					                    --lcd.setText("HCHO",hcho.."mg/m3")
+					                    if(Sensors.setSensorValue("HCHO",hcho,"mg/m3")) then bRefreshLcd = true end
 					               end
                          hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10) ..tostring(hcho_orig%10)
                     end
                end
           end
           aqi,result = calcAQI(pm25)
-					lcd.setText("pm25",pm25..result)
-					lcd.setText("aqi",aqi)
+					--lcd.setText("pm25",pm25..result)
+					if(Sensors.setSensorValue("pm25",pm25,result)) then bRefreshLcd = true end
+					--lcd.setText("aqi",aqi)
+					if(Sensors.setSensorValue("aqi",aqi,"")) then bRefreshLcd = true end
      end
 	--HH-HCHO-M sensor decode / Dart HCHO
 	if(((string.byte(data,1)==0xff) and(string.byte(data,2)==0x17))) then
+		if(string.byte(data,5) == nil or string.byte(data,6) == nil)then return end
 		hcho_orig = (string.byte(data,5)*256+string.byte(data,6))
 		hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)
 		if(hcho~=nil)then
-			if(co2~=nil)then
-				if(lcd.getCurrentPage()~=6) then
-					lcd.setPage(6)
-				end
-			else
-				if(lcd.getCurrentPage()~=4) then
-					lcd.setPage(4)
-				end
-			end
-			lcd.setText("HCHO",hcho.."mg/m3")
+			--if(co2~=nil)then
+				--if(lcd.getCurrentPage()~=6) then
+					--lcd.setPage(6)
+				--end
+			--else
+				--if(lcd.getCurrentPage()~=4) then
+					--lcd.setPage(4)
+				--end
+			--end
+			--lcd.setText("HCHO",hcho.."mg/m3")
+			if(Sensors.setSensorValue("HCHO",hcho,"mg/m3")) then bRefreshLcd = true end
 		end
 		--get more accurate date to lewei end
 		hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)..tostring(hcho_orig%10)
-		print("HCHO:"..hcho)
+		--print("HCHO:"..hcho)
 	end
 	rdbuf2 = ""
 end
 
 
 local function parse1(data)
-	print("parse1")
-	sys.timer_stop(changeUart1SensorId)
+	--print("parse1"..common.binstohexs(data))
+	--sys.timer_stop(changeUart1SensorId)
 	--DS HCHO sensor decode (from uart1)
 	if((string.byte(data,1)==0x42) and(string.byte(data,2)==0x4d) and(string.byte(data,3)==0x08) and(string.byte(data,4)==0x14)) then
 		unit_byte = string.byte(data,5)
@@ -186,10 +235,11 @@ local function parse1(data)
     end
     --print("HCHO:"..hcho)
 		if(hcho~=nil)then
-			if(lcd.getCurrentPage()~=4) then
-				lcd.setPage(4)
-			end
-			lcd.setText("HCHO",hcho..unit)
+			--if(lcd.getCurrentPage()~=4) then
+				--lcd.setPage(4)
+			--end
+			--lcd.setText("HCHO",hcho..unit)
+			if(Sensors.setSensorValue("HCHO",hcho,unit)) then bRefreshLcd = true end
 		end
 		
 	end
@@ -200,18 +250,19 @@ local function parse1(data)
 		data_byte_l = string.byte(data,5)
 		
 		co2 = data_byte_h*256+data_byte_l
-		print("CO2:"..co2)
+		--print("CO2:"..co2)
 		if(co2~=nil)then
-			if(hcho~=nil)then
-				if(lcd.getCurrentPage()~=6) then
-					lcd.setPage(6)
-				end
-			else
-				if(lcd.getCurrentPage()~=5) then
-					lcd.setPage(5)
-				end
-			end
-			lcd.setText("CO2",co2.."ppm")
+			--if(hcho~=nil)then
+				--if(lcd.getCurrentPage()~=6) then
+					--lcd.setPage(6)
+				--end
+			--else
+				--if(lcd.getCurrentPage()~=5) then
+					--lcd.setPage(5)
+				--end
+			--end
+			--lcd.setText("CO2",co2.."ppm")
+			if(Sensors.setSensorValue("CO2",co2,"ppm")) then bRefreshLcd = true end
 		end
 	end
 	
@@ -264,7 +315,6 @@ end
 
 
 
-
 --[[
 函数名：write
 功能  ：通过串口发送数据
@@ -273,31 +323,13 @@ end
 返回值：无
 ]]
 function write(s)
-	print("write",s)
+	--print("write",s)
 	uart.write(UART_ID,s.."\r\n")
 end
 
 function statusChk()
-	temp = si7021.getTemp()
-	hum = si7021.getHum()
-	if(temp~=nil and hum~=nil) then
-		lcd.setText("temp",temp.."℃")
-		lcd.setText("hum",hum.."%")
-	end
 	lcd.displayTestDot()
-end
-
-function dataUpload()
-	if(aqi~=nil)then webRequest.appendSensorValue("AQI",aqi) end
-	if(pm25~=nil)then webRequest.appendSensorValue("dust",pm25) end
-	if(hcho~=nil)then webRequest.appendSensorValue("hcho",hcho) end
-	if(co2~=nil)then webRequest.appendSensorValue("CO2",co2) end
-	temp = si7021.getTemp()
-	hum = si7021.getHum()
-	if(temp~=nil and hum~=nil) then
-		webRequest.appendSensorValue("T1",temp)
-		webRequest.sendSensorValue("H1",hum)
-	end
+	portCycle()
 end
 
 
@@ -310,22 +342,206 @@ pm.wake("run")
 --uart.setup(UART_ID,9600,8,uart.PAR_NONE,uart.STOP_1)
 
 
-sys.reguart(1,read1)
+sys.reguart(UART_ID,read1)
 --配置并且打开串口1
-uart.setup(1,9600,8,uart.PAR_NONE,uart.STOP_1)
-sys.timer_loop_start(UART1_Data_request,5000)
+uart.setup(UART_ID,9600,8,uart.PAR_NONE,uart.STOP_1)
+--sys.timer_loop_start(UART1_Data_request,5000)
 
-sys.reguart(2,read2)
+--sys.reguart(2,read2)
 --配置并且打开串口2
-uart.setup(2,9600,8,uart.PAR_NONE,uart.STOP_1)
+--uart.setup(2,9600,8,uart.PAR_NONE,uart.STOP_1)
 
 lcd.setInfo("设备初始化中")
 
-sys.timer_loop_start(statusChk,2000)
+sys.timer_start(statusChk,3000)
 
-sys.timer_loop_start(dataUpload,120000)
 
 lcd.setPage(1)
+
+--[[
+函数名：rcvcb
+功能  ：接收回调函数
+参数  ：result：数据接收结果(此参数为0时，后面的几个参数才有意义)
+				0:成功
+				2:表示实体超出实际实体，错误，不输出实体内容
+				3:接收超时
+		statuscode：http应答的状态码，string类型或者nil
+		head：http应答的头部数据，table类型或者nil
+		body：http应答的实体数据，string类型或者nil
+返回值：无
+]]
+local function rcvcb(result,statuscode,head,body)
+	--print("rcvcb",result,statuscode,head,slen(body or ""))
+	
+	if result==0 then
+		--if head then
+			--print("rcvcb head:")
+			--遍历打印出所有头部，键为首部名字，键所对应的值为首部的字段值
+			--for k,v in pairs(head) do		
+				--print(k..": "..v)
+			--end
+		--end
+		print("requestType:"..requestType)
+		print(body)
+		
+		fbStr = body
+		if(nvm.get("qrCode")~=nil) then
+			if(requestType == 1) then
+				if(string.find(fbStr,"Invalid device ID")~=nil) then
+				      --have qrcode file
+				      Ports.lockPort(0)
+				      lcd.setPage(2)
+				      sys.timer_stop(http_run)
+				      sys.timer_stop(statusChk)
+				      lcd.setPage(2)
+				      lcd.qrCodeDisp(nvm.get("qrCode"),tonumber(nvm.get("qrLength")))
+				      --lcd.setText("info","绑定完成后,手工重启设备")
+				      lcd.setText("info","IMEI:"..misc.getimei())
+				      lcd.disableRefresh()
+				else
+				      print("set device name ok")
+				      validDev = true
+				      Ports.unlock()
+				      nameStr = string.match(fbStr,"\"name\":\".+\"typeName\":\"lw%-board")
+				      if(nameStr ~= nil)then
+					      dName = string.sub(nameStr,9,-23)
+			          lcd.setText("info","")
+			          if(dName ~= nil) then
+			               lcd.setText("deviceName",dName)
+			          end
+			        end
+			        sys.timer_loop_start(getIccid,30000)
+			  end
+			elseif(requestType == 4) then
+				if(string.find(fbStr,"\"Successful\":true")~=nil) then
+					sys.timer_stop(getIccid)
+					if(config.bEnableLocate == true) then
+						setRequestType(3)
+						print("update location in 30s later")
+						sys.timer_loop_start(updateLoc,30000)
+					else
+						setRequestType(0)
+					end
+					print("stop getIccid timer")
+				end
+				sys.timer_stop_all(http_run)
+			  sys.timer_loop_start(http_run,120000)
+			elseif(requestType == 3) then
+				setRequestType(0)
+			end
+		else
+			if(string.find(fbStr,"Invalid SN")~=nil) then
+			    lcd.setText("info","无效二维码")			    
+			else
+			    qrCode = string.sub(string.match(fbStr,"QRCode\":\"%w+\""),10,-2)
+			    qrLength = string.sub(string.match(fbStr,"QRLength\":%d+"),11,-1)
+			    lcd.setText("info","校验二维码..")
+			    print("Got:"..qrCode)
+			    nvm.set("qrCode",qrCode)
+			    nvm.set("qrLength",qrLength)
+			    nvm.flush()
+			    lcd.setText("info","获取成功.")
+			    sys.restart("Got QRCode")
+			end
+		end
+	end
+	
+	httpclient:disconnect(discb)
+end
+
+--[[
+函数名：sckerrcb
+功能  ：SOCKET失败回调函数
+参数  ：
+		r：string类型，失败原因值
+		CONNECT: socket一直连接失败，不再尝试自动重连
+返回值：无
+]]
+local function sckerrcb(r)
+	print("sckerrcb",r)
+end
+
+--[[
+函数名：connectedcb
+功能  ：SOCKET connected 成功回调函数
+参数  ：
+返回值：
+]]
+local function connectedcb()
+	--[[调用此函数才会发送报文,request(cmdtyp,url,head,body,rcvcb),回调函数rcvcb(result,statuscode,head,body)
+		url就是路径，例："/XXX/XXXX"，head为表的形式，例：{"Connection: keep-alive","Content-Type: text/html; charset=utf-8"}，注意:后面
+		需加一个空格。body就是需要传的数据，为字符串类型。
+	]]
+	--定义数据变量格式
+	
+	if(validDev == false) then
+		if(nvm.get("qrCode")~=nil) then
+			setRequestType(1)
+			Ports.lockPort(0)
+			httpclient:request("GET","/api/v1/device/getbysn/"..misc.getimei().."?encode=gbk",{"Connection: close"},"",rcvcb)
+	    lcd.setText("info","检查绑定状态...") 
+		else
+			setRequestType(2)
+			Ports.lockPort(0)
+			httpclient:request("GET","/api/v1/sn/info/"..misc.getimei().."?type=hex",{"Connection: close"},"",rcvcb)
+			lcd.setText("info","获取二维码")
+		end
+	end
+	
+	if(validDev==true)then
+		if(requestType == 0) then
+			PostData = "["
+			for i,v in pairs(Sensors.data()) do 
+			    --convert more device id here
+			    if(i=="Hum")then i = "H1" end
+			    if(i=="Temp")then i = "T1" end
+		      if(i=="pm25")then i = "dust" end
+			    PostData = PostData .. "{\"Name\":\""..i.."\",\"Value\":\"" .. v .. "\"},"
+			end
+			
+			PostData = string.sub(PostData,1,-2) .. "]"
+			httpclient:request("POST","/api/V1/gateway/UpdateSensorsBySN/"..misc.getimei(),{"Connection: close"},PostData,rcvcb)
+		end
+	end
+	PostData = ""
+end 
+
+--[[
+函数名：connect
+功能：连接服务器
+参数：
+	 connectedcb:连接成功回调函数
+	 sckerrcb：http lib中socket一直重连失败时，不会自动重启软件，而是调用sckerrcb函数
+返回：
+]]
+local function connect()
+	if(httpclient) then
+		httpclient:connect(connectedcb,sckerrcb)
+	else
+		print("no httpclient exist,checking network or sim card")
+	end
+end
+--[[
+函数名：discb
+功能  ：HTTP连接断开后的回调
+参数  ：无		
+返回值：无
+]]
+function discb()
+	print("http discb")
+end
+
+function http_run()
+print("http_run")
+	--因为http协议必须基于“TCP”协议，所以不必传入PROT参数
+	if(httpclient==nil)then
+		httpclient=http.create(ADDR,PORT)
+	end
+	--httpclient:setconnectionmode(true)
+	--建立http连接
+	connect()	
+end
+
 
 
 if(nvm.get("qrCode")~=nil)then
@@ -333,14 +549,36 @@ _G.print("qrCode = "..nvm.get("qrCode"))
 _G.print("qrLength = "..nvm.get("qrLength"))
 else
 	--get qrCode
-	--
+	--sys.timer_stop(statusChk)
 	
 end
 
-function stopStatusCheck()
-	sys.timer_stop(statusChk)
+--pins.set(false,pincfg.PIN24)
+Ports.openPort(0)
+
+
+sys.timer_start(http_run,5000)
+
+function updateLoc()
+	lat,lng = locator.getLocation()
+	if( lat ~= nil and lng ~= nil) then
+		setRequestType(3)
+		httpclient:request("POST","/api/v1/gateway/updatebysn/"..misc.getimei(),{"Connection: close"},"{\"position\":\""..lng..","..lat.."\"}",rcvcb)
+		sys.timer_start(updateLoc,3600000)
+	else
+		print("can't get postion,try next 30s later")
+	end
 end
 
---pins.set(false,pincfg.PIN24)
+function getIccid()
+	iccid = sim.geticcid()
+	if(iccid) then
+		setRequestType(4)
+		print("sending iccid to server")
+		httpclient:request("POST","/api/v1/gateway/updatebysn/"..misc.getimei(),{"Connection: close"},"{\"iccid\":\""..iccid.."\"}",rcvcb)
+		lcd.setInfo(iccid)
+	end
+end
 
-webRequest.connect()
+
+
