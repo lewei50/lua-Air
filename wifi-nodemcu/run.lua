@@ -86,7 +86,7 @@ function cb(data)
                          --end
                          --Lcd.showPage(4)
                          hcho_orig = (string.byte(data,29)*256+string.byte(data,30))
-                         hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)
+                         hcho = hcho_orig/1000
                          if(hcho~=nil)then
                               --lcd.setText("HCHO",hcho.."mg/m3")
                               if(Sensors.setSensorValue("HCHO",hcho,"mg/m3")) then bRefreshLcd = true end
