@@ -92,6 +92,8 @@ local function parse2(data)
                pm25 = (string.byte(data,7)*256+string.byte(data,8))
           else
                pm25 = (string.byte(data,13)*256+string.byte(data,14))
+               --[[
+               --doesn't need to support pms5003s on air200
                if(string.byte(data,29) ~=nil and string.byte(data,30)~=nil)then
                     if(string.byte(data,29) > 0x50 and string.byte(data,30) == 0x00)then
                          hcho = nil
@@ -111,6 +113,7 @@ local function parse2(data)
                          hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10) ..tostring(hcho_orig%10)
                     end
                end
+               ]]--
           end
           aqi,result = calcAQI(pm25)
 					lcd.setText("pm25",pm25..result)
