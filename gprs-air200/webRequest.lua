@@ -13,6 +13,7 @@ module(...,package.seeall)
 local ssub,schar,smatch,sbyte,slen = string.sub,string.char,string.match,string.byte,string.len
 --测试时请搭建自己的服务器
 local SCK_IDX,PROT,ADDR,PORT = 1,"TCP","www.lewei50.com",80
+--local SCK_IDX,PROT,ADDR,PORT = 1,"TCP","114.55.54.60",9971
 --"www.lewei50.com",80
 --"114.55.54.60",9971
 --linksta:与后台的socket连接状态
@@ -20,9 +21,9 @@ local linksta
 --是否成功连接过服务器
 local hasconnected
 --开机后如果一次也没有连接上后台，会有如下异常处理
---一个连接周期内的动作：如果连接后台失败，会尝试重连，重连间隔为RECONN_PERIOD秒，最多重连RECONN_MAX_CNT次
---如果一个连接周期内都没有连接成功，则等待RECONN_CYCLE_PERIOD秒后，重新发起一个连接周期
---如果连续RECONN_CYCLE_MAX_CNT次的连接周期都没有连接成功，则重启软件
+--一个连接周期内的动作：如果连接后台失败，会尝试重连，重连间隔为RECONN_PERIOD秒(25)，最多重连RECONN_MAX_CNT次(3)
+--如果一个连接周期内都没有连接成功，则等待RECONN_CYCLE_PERIOD秒(120)后，重新发起一个连接周期
+--如果连续RECONN_CYCLE_MAX_CNT次(3)的连接周期都没有连接成功，则重启软件
 local RECONN_MAX_CNT,RECONN_PERIOD,RECONN_CYCLE_MAX_CNT,RECONN_CYCLE_PERIOD = 3,25,3,120
 --reconncnt:当前连接周期内，已经重连的次数
 --reconncyclecnt:连续多少个连接周期，都没有连接成功
@@ -31,7 +32,7 @@ local RECONN_MAX_CNT,RECONN_PERIOD,RECONN_CYCLE_MAX_CNT,RECONN_CYCLE_PERIOD = 3,
 local reconncnt,reconncyclecnt,conning = 0,0
 
 local sensorValueTable = {}
-local validDev = false
+local validDev = true
 
 --[[
 函数名：print
@@ -53,16 +54,17 @@ end
 function sendSensorValue(sname,svalue)
      --定义数据变量格式
      PostData = "["
-     for i,v in pairs(sensorValueTable) do 
+     for i,v in pairs(sensorValueTable) do
           PostData = PostData .. "{\"Name\":\""..i.."\",\"Value\":\"" .. v .. "\"},"
           --print(i)
-          --print(v) 
+          --print(v)
      end
      PostData = PostData .."{\"Name\":\""..sname.."\",\"Value\":\"" .. svalue .. "\"}"
      PostData = PostData .. "]"
-     
+
      data = "POST /api/V1/gateway/UpdateSensorsBySN/"..misc.getimei().." HTTP/1.1\r\nHost: www.lewei50.com\r\nContent-Length: " .. string.len(PostData) .. "\r\n\r\n"..PostData .. "\r\n"
      if(validDev) then
+     	print("valid device,send data")
      	--pins.set(false,pincfg.PIN24)
      	snd(data)
      end
@@ -75,7 +77,7 @@ end
 功能  ：调用发送接口发送数据
 参数  ：
         data：发送的数据，在发送结果事件处理函数ntfy中，会赋值到item.data中
-		para：发送的参数，在发送结果事件处理函数ntfy中，会赋值到item.para中 
+		para：发送的参数，在发送结果事件处理函数ntfy中，会赋值到item.para中
 返回值：调用发送接口的结果（并不是数据发送是否成功的结果，数据发送是否成功的结果在ntfy中的SEND事件中通知），true为成功，其他为失败
 ]]
 function snd(data,para)
@@ -85,7 +87,7 @@ end
 --[[
 函数名：locrpt
 功能  ：发送位置包数据到后台
-参数  ：无 
+参数  ：无
 返回值：无
 ]]
 function locrpt()
@@ -93,20 +95,20 @@ function locrpt()
 	--if linksta then
 	if(nvm.get("qrCode")~=nil)then
 		data = "GET /api/v1/device/getbysn/"..misc.getimei().."?encode=gbk HTTP/1.1\r\nHost: www.lewei50.com\r\nAccept: */*\r\n\r\n"
-    lcd.setText("info","检查绑定状态...") 
+    lcd.setText("info","检查绑定状态...")
 	else
 		data = "GET /api/v1/sn/info/"..misc.getimei().."?type=hex HTTP/1.1\r\nHost: www.lewei50.com\r\nAccept: */*\r\n\r\n"
 		lcd.setText("info","获取二维码")
 	end
 		snd(data)
-		--if not snd("loc data\r\n","LOCRPT")	then locrpt1cb({data="loc data\r\n",para="LOCRPT"},false) end	
+		--if not snd("loc data\r\n","LOCRPT")	then locrpt1cb({data="loc data\r\n",para="LOCRPT"},false) end
 	--end
 end
 
 --[[
 函数名：locrptcb
 功能  ：位置包发送结果处理，启动定时器，10秒钟后再次发送位置包2
-参数  ：  
+参数  ：
         result： bool类型，发送结果或者是否超时，true为成功或者超时，其他为失败
 		item：table类型，{data=,para=}，消息回传的参数和数据，例如调用socket.send时传入的第2个和第3个参数分别为dat和par，则item={data=dat,para=par}
 返回值：无
@@ -123,18 +125,21 @@ end
 --[[
 函数名：sndcb
 功能  ：发送数据结果事件的处理
-参数  ：  
+参数  ：
         result： bool类型，消息事件结果，true为成功，其他为失败
 		item：table类型，{data=,para=}，消息回传的参数和数据，例如调用socket.send时传入的第2个和第3个参数分别为dat和par，则item={data=dat,para=par}
 返回值：无
 ]]
 local function sndcb(item,result)
-	print("sndcb",item.data,item.para,result)
+	print("sndcb data",item.data)
+	print("sndcb para",item.para)
+	print("sndcb result",result)
 	if not item.para then return end
 	if item.para=="LOCRPT" then
 		locrptcb(item,result)
 	end
-	if not result then link.shut() end
+	--if not result then link.shut() end
+	link.shut()
 end
 
 --[[
@@ -180,6 +185,8 @@ end
 ]]
 function ntfy(idx,evt,result,item)
 	print("ntfy",evt,result,item,hasconnected)
+	--webRequest	ntfy	SEND	true	table: 0x821d5f38	true//正确的
+	--webRequest	ntfy	SEND	false	table: 0x821d03f8	true//出错的
 	--连接结果（调用socket.connect后的异步事件）
 	if evt == "CONNECT" then
 		conning = false
@@ -199,10 +206,10 @@ function ntfy(idx,evt,result,item)
 			if not hasconnected then
 				--5秒后重连
 				sys.timer_start(reconn,RECONN_PERIOD*1000)
-			else				
+			else
 				link.shut()
-			end			
-		end	
+			end
+		end
 	--数据发送结果（调用socket.send后的异步事件）
 	elseif evt == "SEND" then
 		if item then
@@ -219,7 +226,7 @@ function ntfy(idx,evt,result,item)
 	--连接主动断开（调用socket.disconnect后的异步事件）
 	elseif evt == "DISCONNECT" then
 		linksta = false
-		--补充自定义功能代码			
+		--补充自定义功能代码
 	end
 	--其他错误处理
 	if smatch((type(result)=="string") and result or "","ERROR") then
@@ -240,6 +247,8 @@ function rcv(idx,fbStr)
 	--lcd.setPic("wifiState",5)
 	if(nvm.get("qrCode")~=nil) then
 		if(string.find(fbStr,"Invalid device ID")~=nil) then
+					validDev = false
+		      print("this is a invalid device")
 		      --wifi not set,but have qrcode file
 		      --print("fail")
 		      --require("qrCode")
@@ -248,12 +257,15 @@ function rcv(idx,fbStr)
 		      --lcd.setText("info","绑定完成后,手工重启设备")
 		      run.stopStatusCheck()
 		      lcd.setText("info","IMEI:"..misc.getimei())
+		--{"Successful":true,"Message":"Successful. "}
+		elseif(string.find(fbStr,"\"Successful\":true")~=nil) then
+			print("send successed")
 		else
-		      print("ok")
 		      lcd.setPic("wifiState",5)
 		      validDev = true
 		      nameStr = string.match(fbStr,"\"name\":\".+\"typeName\":\"lw%-board")
 		      if(nameStr ~= nil)then
+		      	print("this is a valid device")
 			      dName = string.sub(nameStr,9,-23)
 	          lcd.setText("info","")
 	          if(dName ~= nil) then
@@ -276,7 +288,7 @@ function rcv(idx,fbStr)
 		    sys.restart("Got QRCode")
 		end
 	end
-	
+
 	--pins.set(true,pincfg.PIN24)
 end
 

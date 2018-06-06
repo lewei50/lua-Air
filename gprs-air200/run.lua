@@ -46,7 +46,7 @@ end
 
 
 local function UART1_Data_request()
-	print("uart1SensorId:"..uart1SensorId)
+	--print("uart1SensorId:"..uart1SensorId)
 	if(uart1SensorId == 0) then
 		DS_HCHO_Data_request()
 	elseif(uart1SensorId == 1)then
@@ -84,8 +84,8 @@ end
 ]]
 
 local function parse2(data)
-		print("parse2")
-	if not data then return end	
+	--print("parse2")
+	if not data then return end
 	if((((string.byte(data,1)==0x42) and(string.byte(data,2)==0x4d)) or ((string.byte(data,1)==0x32) and(string.byte(data,2)==0x3d))) and string.byte(data,13)~=nil and string.byte(data,14)~=nil)  then
           if((string.byte(data,1)==0x32) and(string.byte(data,2)==0x3d)) then
                --Teetc.com
@@ -144,7 +144,7 @@ end
 
 
 local function parse1(data)
-	print("parse1")
+	--print("parse1")
 	sys.timer_stop(changeUart1SensorId)
 	--DS HCHO sensor decode (from uart1)
 	if((string.byte(data,1)==0x42) and(string.byte(data,2)==0x4d) and(string.byte(data,3)==0x08) and(string.byte(data,4)==0x14)) then
@@ -163,7 +163,7 @@ local function parse1(data)
 		elseif(unit_byte == 5) then
 			unit = "mg/m3"
 		end
-		
+
 		if(rate_byte==1) then
 			rate = 1
 		elseif(rate_byte == 2) then
@@ -173,16 +173,16 @@ local function parse1(data)
 		elseif(rate_byte == 4) then
 			rate = 1000
 		end
-		
+
 		--print ("DSHCHO:HIGH:"..data_byte_h.." LOW:"..data_byte_l..unit)
-		
+
 		hcho_orig = data_byte_h*256+data_byte_l
 		curr_rate = rate
 		hcho = ""
 		for i = 1,rate_byte,1 do
     	hcho = hcho .. hcho_orig/curr_rate
-    	if(i==1)then 
-    		hcho = hcho .."." 
+    	if(i==1)then
+    		hcho = hcho .."."
     	end
     	hcho_orig = hcho_orig % curr_rate
     	curr_rate = curr_rate /10
@@ -194,14 +194,14 @@ local function parse1(data)
 			end
 			lcd.setText("HCHO",hcho..unit)
 		end
-		
+
 	end
-	
+
 	--SenseAir S8 decode
 	if((string.byte(data,1)==0xfe) and(string.byte(data,2)==0x04) and(string.byte(data,3)==0x02)) then
 		data_byte_h = string.byte(data,4)
 		data_byte_l = string.byte(data,5)
-		
+
 		co2 = data_byte_h*256+data_byte_l
 		print("CO2:"..co2)
 		if(co2~=nil)then
@@ -217,8 +217,8 @@ local function parse1(data)
 			lcd.setText("CO2",co2.."ppm")
 		end
 	end
-	
-	
+
+
 	rdbuf1 = ""
 	--测试是否单发送的传感器接到了uart1上
 	parse2(data)
@@ -237,12 +237,12 @@ local function read1()
 	--如果接收缓冲区为空，则会以中断方式通知Lua脚本收到了新数据；
 	--如果接收缓冲器不为空，则不会通知Lua脚本
 	--所以Lua脚本中收到中断读串口数据时，每次都要把接收缓冲区中的数据全部读出，这样才能保证底层core中的新数据中断上来，此read函数中的while语句中就保证了这一点
-	while true do		
+	while true do
 		data = uart.read(1,"*l",0)
 		if not data or string.len(data) == 0 then break end
 		--打开下面的打印会耗时
 		--print("read:",data,common.binstohexs(data))
-		rdbuf1 = rdbuf1..data	
+		rdbuf1 = rdbuf1..data
 	end
 	sys.timer_start(parse1,50,rdbuf1)
 end
@@ -254,12 +254,12 @@ local function read2()
 	--如果接收缓冲区为空，则会以中断方式通知Lua脚本收到了新数据；
 	--如果接收缓冲器不为空，则不会通知Lua脚本
 	--所以Lua脚本中收到中断读串口数据时，每次都要把接收缓冲区中的数据全部读出，这样才能保证底层core中的新数据中断上来，此read函数中的while语句中就保证了这一点
-	while true do		
+	while true do
 		data = uart.read(2,"*l",0)
 		if not data or string.len(data) == 0 then break end
 		--打开下面的打印会耗时
 		--print("read:",data,common.binstohexs(data))
-		rdbuf2 = rdbuf2..data	
+		rdbuf2 = rdbuf2..data
 	end
 	sys.timer_start(parse2,50,rdbuf2)
 end
@@ -337,7 +337,7 @@ _G.print("qrLength = "..nvm.get("qrLength"))
 else
 	--get qrCode
 	--sys.timer_stop(statusChk)
-	
+
 end
 
 function stopStatusCheck()

@@ -18,7 +18,7 @@ end
 local CMD_SCANNER,CMD_GPIO,CMD_PORT,FRM_TAIL = 1,2,3,string.char(0xC0)
 --串口读到的数据缓冲区
 local rdbuf = ""
-
+local debug = false
 --[[
 函数名：print
 功能  ：打印接口，此文件中的所有打印都会加上test前缀
@@ -26,7 +26,7 @@ local rdbuf = ""
 返回值：无
 ]]
 local function print(...)
-	_G.print("[LCD]",...)
+	if(debug) then _G.print("[LCD]",...) end
 end
 
 --[[
@@ -36,7 +36,7 @@ end
 返回值：无
 ]]
 local function read()
-	
+
 end
 
 --[[
