@@ -140,6 +140,9 @@ local function sndcb(item,result)
 	end
 	--if not result then link.shut() end
 	link.shut()
+	if item.result == false then
+		reconn()
+	end
 end
 
 --[[
@@ -295,8 +298,9 @@ end
 
 function getIccid()
 	iccid = sim.geticcid()
+	rssi = net.getrssi()
 	if(iccid) then
-		PostData = "{\"iccid\":\""..iccid.."\""
+		PostData = "{\"iccid\":\""..iccid.."\",\"version\":\""..config.version.."\",\"rssi\":\""..rssi.."\""
 		if(config.bEnableLocate == true) then
 			lat,lng = locator.getLocation()
 			if( lat ~= nil and lng ~= nil) then

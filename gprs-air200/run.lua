@@ -347,3 +347,9 @@ end
 --pins.set(false,pincfg.PIN24)
 
 webRequest.connect()
+
+function resetSys()
+	sys.restart("restart normally")
+end
+
+sys.timer_start(resetSys,3600000)

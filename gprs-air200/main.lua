@@ -15,6 +15,7 @@ require"misc"
 require"pm" --test模块用到了pm.wake接口
 require"sim"
 require"wdt"
+require"net"
 require"config"
 require"nvm"
 --require"pincfg"
