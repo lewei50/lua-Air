@@ -4,6 +4,6 @@ qrCode = nil
 qrLength = nil
 
 LEWEI_PROJECT_ID = 0
-bEnableLocate = false
+bEnableLocate = true
 
-version = "1.091-0014-1.1"
+version = "2.2.5-0021-1.2"

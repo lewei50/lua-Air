@@ -33,7 +33,8 @@ local reconncnt,reconncyclecnt,conning = 0,0
 
 local sensorValueTable = {}
 local validDev = true
-
+local maxErrCount = 3
+local errCount = 0
 --[[
 函数名：print
 功能  ：打印接口，此文件中的所有打印都会加上test前缀
@@ -140,7 +141,11 @@ local function sndcb(item,result)
 	end
 	--if not result then link.shut() end
 	link.shut()
-	if item.result == false then
+	if item.result ~= true then
+		errCount = errCount + 1
+		if(errCount > maxErrCount) then 
+			sys.restart("too many errors")
+		end
 		reconn()
 	end
 end
