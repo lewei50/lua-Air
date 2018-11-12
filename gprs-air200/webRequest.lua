@@ -135,19 +135,22 @@ local function sndcb(item,result)
 	print("sndcb data",item.data)
 	print("sndcb para",item.para)
 	print("sndcb result",result)
-	--if not result then link.shut() end
-	link.shut()
-	if item.result ~= true then
-		errCount = errCount + 1
-		if(errCount > maxErrCount) then 
-			sys.restart("too many errors")
+	if not item.para then
+		print("no item para")
+		if item.result == false then
+			errCount = errCount + 1
+			if(errCount > maxErrCount) then 
+				sys.restart("too many errors")
+			end
+			reconn()
 		end
-		reconn()
+	 return 
 	end
-	if not item.para then return end
 	if item.para=="LOCRPT" then
 		locrptcb(item,result)
 	end
+	--if not result then link.shut() end
+	link.shut()
 end
 
 --[[
