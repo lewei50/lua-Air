@@ -21,6 +21,9 @@ require"config"
 require"nvm"
 nvm.init("config.lua")
 
+require 'AM2320'
+
+require"mono_i2c_ssd1306"
 require"lcd"
 require"si7021"
 if(config.bEnableLocate == true) then require"locator" end

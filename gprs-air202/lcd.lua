@@ -63,15 +63,40 @@ function refreshPage()
 	end
 	showPage(pg)
 	setPic("wifiState",wifiState)
+	htStr = ""
+	pmStr = " "
+	hchoStr = " "
+	co2Str = " "
 	for k,v in pairs(Sensors.data()) do
 	    print(k,v,Sensors.units()[k])
-	    if(k=="Hum")then setText("hum",v..Sensors.units()[k]) end
-	    if(k=="Temp")then setText("temp",v..Sensors.units()[k]) end
-	    if(k=="pm25")then setText("pm25",v..Sensors.units()[k]) end
-	    if(k=="aqi")then setText("aqi",v..Sensors.units()[k]) end
-	    if(k=="HCHO")then setText("HCHO",v..Sensors.units()[k]) end
-	    if(k=="CO2")then setText("CO2",v..Sensors.units()[k]) end
+	    if(k=="Hum")then
+	    	setText("hum",v..Sensors.units()[k])
+	    	htStr = htStr .. "H:"..v.."%"
+	    end
+	    if(k=="Temp")then
+	    	setText("temp",v..Sensors.units()[k])
+	    	htStr = "T:"..v.."C "..htStr
+	    end
+	    if(k=="pm25")then
+	    	setText("pm25",v..Sensors.units()[k])
+	    	pmStr = " PM:"..v..Sensors.units()[k]
+	    end
+	    if(k=="aqi")then
+	    	setText("aqi",v..Sensors.units()[k])
+	    	pmStr = "AQI:"..v..Sensors.units()[k]..pmStr
+	    end
+	    if(k=="HCHO")then
+	    	setText("HCHO",v..Sensors.units()[k])
+	    	hchoStr ="HCHO:"..v..Sensors.units()[k]
+	    end
+	    if(k=="CO2")then
+	    	setText("CO2",v..Sensors.units()[k])
+	    	co2Str ="CO2:"..v..Sensors.units()[k]
+	    end
 	end
+	oledShow(htStr,pmStr,hchoStr,co2Str)
+	print("htStr,pmStr,hchoStr,co2Str")
+	print(htStr,pmStr,hchoStr,co2Str)
 end
 
 --[[
@@ -199,6 +224,22 @@ function qrCodeDisp(qrCode,qrLength)
 		until bitMask < 1
 		--print(output)
 	end
+end
+
+-- 获取字符串显示的起始X坐标
+local function getxpos(width, str)
+    return (width - string.len(str) * 8) / 2
+end
+
+function oledShow(str, str2, str3, str4)
+    local WIDTH, HEIGHT = disp.getlcdinfo()
+    disp.clear()
+    disp.puttext(common.utf8ToGb2312(str), getxpos(WIDTH, common.utf8ToGb2312(str)), 0)
+    if str2 ~= nil then disp.puttext(common.utf8ToGb2312(str2), getxpos(WIDTH, common.utf8ToGb2312(str2)), 16) end
+    if str3 ~= nil then disp.puttext(common.utf8ToGb2312(str3), getxpos(WIDTH, common.utf8ToGb2312(str3)), 32) end
+    if str4 ~= nil then disp.puttext(common.utf8ToGb2312(str4), getxpos(WIDTH, common.utf8ToGb2312(str4)), 48) end
+    --刷新LCD显示缓冲区到LCD屏幕上
+    disp.update()
 end
 
 

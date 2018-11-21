@@ -57,7 +57,7 @@ function getHum()
 	--return string.sub(h, 1, 2).."."..string.sub(h, 3, 3)
 	return  tostring(h/100).."."..tostring(h/10%10)
 	else
-	return 0
+	return h
 	end
 end
 
@@ -67,7 +67,7 @@ function getTemp()
 	if(t<0)then return "-"..tostring(-t/100).."."..tostring(-t/10%10) end
 	return  tostring(t/100).."."..tostring(t/10%10)
 	else
-	return 0
+	return t
 	end
 end
 

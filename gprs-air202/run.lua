@@ -343,6 +343,7 @@ pm.wake("run")
 
 
 sys.reguart(UART_ID,read1)
+--uart.on(UART_ID,"receive",read1)
 --配置并且打开串口1
 uart.setup(UART_ID,9600,8,uart.PAR_NONE,uart.STOP_1)
 --sys.timer_loop_start(UART1_Data_request,5000)
@@ -388,6 +389,9 @@ local function rcvcb(result,statuscode,head,body)
 		if(nvm.get("qrCode")~=nil) then
 			if(requestType == 1) then
 				if(string.find(fbStr,"Invalid device ID")~=nil) then
+							require"qrcode"
+							--disp.puttext("restart after binding",10,28)
+							disp.update()
 				      --have qrcode file
 				      Ports.lockPort(0)
 				      lcd.setPage(2)
@@ -431,16 +435,20 @@ local function rcvcb(result,statuscode,head,body)
 			end
 		else
 			if(string.find(fbStr,"Invalid SN")~=nil) then
-			    lcd.setText("info","无效二维码")			    
+			    lcd.setText("info","无效二维码")
+					lcd.oledShow(" ","Invalid SN")
 			else
 			    qrCode = string.sub(string.match(fbStr,"QRCode\":\"%w+\""),10,-2)
+			    qrCodeUrl = string.sub(string.match(fbStr,"QRCodeUrl\":\"[%w%d:\/.]+\""),13,-2)
 			    qrLength = string.sub(string.match(fbStr,"QRLength\":%d+"),11,-1)
 			    lcd.setText("info","校验二维码..")
-			    print("Got:"..qrCode)
+			    print("qrCodeUrl:"..qrCodeUrl)
 			    nvm.set("qrCode",qrCode)
+			    nvm.set("qrCodeUrl",qrCodeUrl)
 			    nvm.set("qrLength",qrLength)
 			    nvm.flush()
 			    lcd.setText("info","获取成功.")
+					lcd.oledShow(" ","Got QRCODE!")
 			    sys.restart("Got QRCode")
 			end
 		end
@@ -480,11 +488,13 @@ local function connectedcb()
 			Ports.lockPort(0)
 			httpclient:request("GET","/api/v1/device/getbysn/"..misc.getimei().."?encode=gbk",{"Connection: close"},"",rcvcb)
 	    lcd.setText("info","检查绑定状态...") 
+			lcd.oledShow(" ","Check Binding")
 		else
 			setRequestType(2)
 			Ports.lockPort(0)
 			httpclient:request("GET","/api/v1/sn/info/"..misc.getimei().."?type=hex",{"Connection: close"},"",rcvcb)
 			lcd.setText("info","获取二维码")
+			lcd.oledShow(" ","Request QRCODE")
 		end
 	end
 	
@@ -553,7 +563,6 @@ else
 	
 end
 
---pins.set(false,pincfg.PIN24)
 Ports.openPort(0)
 
 
@@ -580,5 +589,33 @@ function getIccid()
 	end
 end
 
+function getAM2302()
+	--log.info("------i2cDemo代码正在运行-------")
+	local temp, hum = AM2320.read(2, 0x5c)
+	if not temp then temp, hum = 250, 300 end
+	t = temp / 10 .. "." .. temp % 10
+	h = hum / 10 .. "." .. hum % 10
+	--msg.ext.temp = temp
+	--msg.ext.hum = hum
+	--log.info("hmi ambient temperature and humidity:", temp, hum)
+	--local c = misc.getClock()
+	--local date = string.format('%04d年%02d月%02d日', c.year, c.month, c.day)
+	--lcd.oledShow("date", "Temp:" .. t, "Humi:" .. h, "LuatBoard-Air202")
+	if(h~=nil and t~=nil)then
+          if(Sensors.setSensorValue("Temp",t,"℃")) then bRefreshLcd = true end
+          if(Sensors.setSensorValue("Hum",h,"%")) then bRefreshLcd = true end
+  end
+end
+--sys.timer_loop_start(getAM2302,5000)
+mono_i2c_ssd1306.init(0xFFFF)
+lcd.oledShow(" ","WWW.LEWEI50.COM")
+--[[
+sys.timerLoopStart(getAM2302,5000)
 
-
+sys.taskInit(function()
+    if i2c.setup(2, i2c.SLOW) ~= i2c.SLOW then
+        log.error("I2C.init is: ", "fail")
+    end
+    mono_i2c_ssd1306.init(0xFFFF)
+end)
+]]--
