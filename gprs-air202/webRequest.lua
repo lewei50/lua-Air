@@ -21,7 +21,7 @@ local hasconnected
 --一个连接周期内的动作：如果连接后台失败，会尝试重连，重连间隔为RECONN_PERIOD秒，最多重连RECONN_MAX_CNT次
 --如果一个连接周期内都没有连接成功，则等待RECONN_CYCLE_PERIOD秒后，重新发起一个连接周期
 --如果连续RECONN_CYCLE_MAX_CNT次的连接周期都没有连接成功，则重启软件
-local RECONN_MAX_CNT,RECONN_PERIOD,RECONN_CYCLE_MAX_CNT,RECONN_CYCLE_PERIOD = 3,25,3,120
+local RECONN_MAX_CNT,RECONN_PERIOD,RECONN_CYCLE_MAX_CNT,RECONN_CYCLE_PERIOD = 3,25,1,120
 --reconncnt:当前连接周期内，已经重连的次数
 --reconncyclecnt:连续多少个连接周期，都没有连接成功
 --一旦连接成功，都会复位这两个标记
@@ -156,13 +156,13 @@ local function reconn()
 		connect()
 	--一个连接周期的重连都失败
 	else
-		reconncnt,reconncyclecnt = 0,reconncyclecnt+1
 		if reconncyclecnt >= RECONN_CYCLE_MAX_CNT then
 			print("could not get QRCode,I give up")
 			lcd.setText("info","放弃重连")
 			sys.restart("connect fail")
 		end
 		sys.timer_start(reconn,RECONN_CYCLE_PERIOD*1000)
+		reconncnt,reconncyclecnt = 0,reconncyclecnt+1
 	end
 end
 

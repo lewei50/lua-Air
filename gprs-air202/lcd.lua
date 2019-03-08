@@ -13,6 +13,10 @@ local bEnableRefresh = true
 local dName = ""
 local wifiState=4
 
+function setDevName(devName)
+	dName = devName
+end
+
 function getCurrentPage()
 	return currentPage
 end
@@ -63,6 +67,7 @@ function refreshPage()
 	end
 	showPage(pg)
 	setPic("wifiState",wifiState)
+	setText("deviceName",dName)
 	htStr = ""
 	pmStr = " "
 	hchoStr = " "

@@ -18,6 +18,9 @@ local bRefreshLcd = false
 
 local validDev = false 
 
+--发送时功耗较高，此时采样值忽略
+local bSending = false
+
 --0 data post,1 qrcode request,2 binding request,3 postion update,4 iccid update
 local requestType = 0
 
@@ -32,6 +35,8 @@ local rdbuf2 = ""
 --0 DS_HCHO,1 SenseAir S8
 local uart1SensorId = 0
 local uart1SensorNum = 2
+
+local lat,lng
 
 --[[
 函数名：print
@@ -55,7 +60,7 @@ end
 
 
 local function DS_HCHO_Data_request()
-	uart.write(1,string.char(0x42)..string.char(0x4d)..string.char(0x01)..string.char(0x00)..string.char(0x00)..string.char(0x00)..string.char(0x90))
+	uart.write(UART_ID,string.char(0x42)..string.char(0x4d)..string.char(0x01)..string.char(0x00)..string.char(0x00)..string.char(0x00)..string.char(0x90))
 	--sys.timer_start(changeUart1SensorId,2000)
 	--Ports.nextPort()
 	sys.timer_start(Ports.nextPort,300)
@@ -63,7 +68,7 @@ local function DS_HCHO_Data_request()
 end
 
 local function SENSEAIR_S8_Data_request()
-	uart.write(1,string.char(0xfe)..string.char(0x04)..string.char(0x00)..string.char(0x03)..string.char(0x00)..string.char(0x01)..string.char(0xd5)..string.char(0xc5))
+	uart.write(UART_ID,string.char(0xfe)..string.char(0x04)..string.char(0x00)..string.char(0x03)..string.char(0x00)..string.char(0x01)..string.char(0xd5)..string.char(0xc5))
 	sys.timer_start(DS_HCHO_Data_request,300)
 end
 
@@ -74,8 +79,10 @@ function portCycle()
 	h = si7021.getHum()
 	--print("statusChk:",t,h)
 	if(h~=nil and t~=nil)then
+		if(bSending == false)then
           if(Sensors.setSensorValue("Temp",t,"℃")) then bRefreshLcd = true end
           if(Sensors.setSensorValue("Hum",h,"%")) then bRefreshLcd = true end
+    end
   end
 	if(Ports.getPort()==0)then
           --refresh lcd
@@ -151,7 +158,9 @@ local function parse2(data)
                          hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)
                          if(hcho~=nil)then
 					                    --lcd.setText("HCHO",hcho.."mg/m3")
-					                    if(Sensors.setSensorValue("HCHO",hcho,"mg/m3")) then bRefreshLcd = true end
+					                    if(bSending == false)then
+					                    	if(Sensors.setSensorValue("HCHO",hcho,"mg/m3")) then bRefreshLcd = true end
+					                    end
 					               end
                          hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10) ..tostring(hcho_orig%10)
                     end
@@ -159,9 +168,11 @@ local function parse2(data)
           end
           aqi,result = calcAQI(pm25)
 					--lcd.setText("pm25",pm25..result)
-					if(Sensors.setSensorValue("pm25",pm25,result)) then bRefreshLcd = true end
-					--lcd.setText("aqi",aqi)
-					if(Sensors.setSensorValue("aqi",aqi,"")) then bRefreshLcd = true end
+					if(bSending == false)then
+						if(Sensors.setSensorValue("pm25",pm25,result)) then bRefreshLcd = true end
+						--lcd.setText("aqi",aqi)
+						if(Sensors.setSensorValue("aqi",aqi,"")) then bRefreshLcd = true end
+					end
      end
 	--HH-HCHO-M sensor decode / Dart HCHO
 	if(((string.byte(data,1)==0xff) and(string.byte(data,2)==0x17))) then
@@ -179,7 +190,9 @@ local function parse2(data)
 				--end
 			--end
 			--lcd.setText("HCHO",hcho.."mg/m3")
-			if(Sensors.setSensorValue("HCHO",hcho,"mg/m3")) then bRefreshLcd = true end
+			if(bSending == false)then
+				if(Sensors.setSensorValue("HCHO",hcho,"mg/m3")) then bRefreshLcd = true end
+			end
 		end
 		--get more accurate date to lewei end
 		hcho = hcho_orig/1000 .."."..tostring(hcho_orig%1000/100) ..tostring(hcho_orig%100/10)..tostring(hcho_orig%10)
@@ -239,7 +252,9 @@ local function parse1(data)
 				--lcd.setPage(4)
 			--end
 			--lcd.setText("HCHO",hcho..unit)
-			if(Sensors.setSensorValue("HCHO",hcho,unit)) then bRefreshLcd = true end
+			if(bSending == false)then
+				if(Sensors.setSensorValue("HCHO",hcho,unit)) then bRefreshLcd = true end
+			end
 		end
 		
 	end
@@ -262,7 +277,9 @@ local function parse1(data)
 				--end
 			--end
 			--lcd.setText("CO2",co2.."ppm")
-			if(Sensors.setSensorValue("CO2",co2,"ppm")) then bRefreshLcd = true end
+			if(bSending == false)then
+				if(Sensors.setSensorValue("CO2",co2,"ppm")) then bRefreshLcd = true end
+			end
 		end
 	end
 	
@@ -286,10 +303,10 @@ local function read1()
 	--如果接收缓冲器不为空，则不会通知Lua脚本
 	--所以Lua脚本中收到中断读串口数据时，每次都要把接收缓冲区中的数据全部读出，这样才能保证底层core中的新数据中断上来，此read函数中的while语句中就保证了这一点
 	while true do		
-		data = uart.read(1,"*l",0)
+		data = uart.read(UART_ID,"*l",0)
 		if not data or string.len(data) == 0 then break end
 		--打开下面的打印会耗时
-		--print("read:",data,common.binstohexs(data))
+		--print("read:",string.len(data),common.binstohexs(data))
 		rdbuf1 = rdbuf1..data	
 	end
 	sys.timer_start(parse1,50,rdbuf1)
@@ -402,7 +419,7 @@ local function rcvcb(result,statuscode,head,body)
 				      --lcd.setText("info","绑定完成后,手工重启设备")
 				      lcd.setText("info","IMEI:"..misc.getimei())
 				      lcd.disableRefresh()
-				else
+				elseif(string.find(fbStr,"typeName")~=nil) then
 				      print("set device name ok")
 				      validDev = true
 				      Ports.unlock()
@@ -411,16 +428,19 @@ local function rcvcb(result,statuscode,head,body)
 					      dName = string.sub(nameStr,9,-23)
 			          lcd.setText("info","")
 			          if(dName ~= nil) then
+			          		 lcd.setDevName(dName)
 			               lcd.setText("deviceName",dName)
+			               lcd.oledShow(" ",dName)
 			          end
 			        end
 			        sys.timer_loop_start(getIccid,30000)
+			  else
+					lcd.oledShow(" ","QRCODE MISSING")
 			  end
 			elseif(requestType == 4) then
 				if(string.find(fbStr,"\"Successful\":true")~=nil) then
 					sys.timer_stop(getIccid)
 					if(config.bEnableLocate == true) then
-						setRequestType(3)
 						print("update location in 30s later")
 						sys.timer_loop_start(updateLoc,30000)
 					else
@@ -481,7 +501,7 @@ local function connectedcb()
 		需加一个空格。body就是需要传的数据，为字符串类型。
 	]]
 	--定义数据变量格式
-	
+	print("requestType"..requestType)
 	if(validDev == false) then
 		if(nvm.get("qrCode")~=nil) then
 			setRequestType(1)
@@ -511,6 +531,14 @@ local function connectedcb()
 			
 			PostData = string.sub(PostData,1,-2) .. "]"
 			httpclient:request("POST","/api/V1/gateway/UpdateSensorsBySN/"..misc.getimei(),{"Connection: close"},PostData,rcvcb)
+		elseif(requestType == 3) then
+			if( lat ~= nil and lng ~= nil) then
+				httpclient:request("POST","/api/v1/gateway/updatebysn/"..misc.getimei(),{"Connection: close"},"{\"position\":\""..lng..","..lat.."\"}",rcvcb)
+			else
+				print("can't get postion,try next time")
+			end
+			setRequestType(0)
+			sys.timer_start(updateLoc,3600000)
 		end
 	end
 	PostData = ""
@@ -526,7 +554,9 @@ end
 ]]
 local function connect()
 	if(httpclient) then
+		bSending = true
 		httpclient:connect(connectedcb,sckerrcb)
+		print("Sending start")
 	else
 		print("no httpclient exist,checking network or sim card")
 	end
@@ -539,6 +569,8 @@ end
 ]]
 function discb()
 	print("http discb")
+	bSending = false
+	print("Sending stop")
 end
 
 function http_run()
@@ -569,14 +601,8 @@ Ports.openPort(0)
 sys.timer_start(http_run,5000)
 
 function updateLoc()
+	setRequestType(3)
 	lat,lng = locator.getLocation()
-	if( lat ~= nil and lng ~= nil) then
-		setRequestType(3)
-		httpclient:request("POST","/api/v1/gateway/updatebysn/"..misc.getimei(),{"Connection: close"},"{\"position\":\""..lng..","..lat.."\"}",rcvcb)
-		sys.timer_start(updateLoc,3600000)
-	else
-		print("can't get postion,try next 30s later")
-	end
 end
 
 function getIccid()
@@ -602,8 +628,10 @@ function getAM2302()
 	--local date = string.format('%04d年%02d月%02d日', c.year, c.month, c.day)
 	--lcd.oledShow("date", "Temp:" .. t, "Humi:" .. h, "LuatBoard-Air202")
 	if(h~=nil and t~=nil)then
+		if(bSending == false)then
           if(Sensors.setSensorValue("Temp",t,"℃")) then bRefreshLcd = true end
           if(Sensors.setSensorValue("Hum",h,"%")) then bRefreshLcd = true end
+    end
   end
 end
 --sys.timer_loop_start(getAM2302,5000)
