@@ -1,6 +1,6 @@
 MODULE_TYPE = "Air202"
 PROJECT = "LEWEI_GPRS_AIR_MONITOR"
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 
 --***********************
 --replace vars from here
@@ -28,6 +28,6 @@ require"lcd"
 require"si7021"
 if(config.bEnableLocate == true) then require"locator" end
 require"run"
-
+print("version:"..VERSION)
 sys.init(0,0)
 sys.run()
