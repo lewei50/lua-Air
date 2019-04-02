@@ -459,7 +459,7 @@ local function rcvcb(result,statuscode,head,body)
 					lcd.oledShow(" ","Invalid SN")
 			else
 			    qrCode = string.sub(string.match(fbStr,"QRCode\":\"%w+\""),10,-2)
-			    qrCodeUrl = string.sub(string.match(fbStr,"QRCodeUrl\":\"[%w%d:\/.]+\""),13,-2)
+			    qrCodeUrl = string.sub(string.match(fbStr,"QRCodeUrl\":\"[%w%d:_\/.]+\""),13,-2)
 			    qrLength = string.sub(string.match(fbStr,"QRLength\":%d+"),11,-1)
 			    lcd.setText("info","Ð£Ñé¶þÎ¬Âë..")
 			    print("qrCodeUrl:"..qrCodeUrl)
