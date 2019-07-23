@@ -458,6 +458,7 @@ local function rcvcb(result,statuscode,head,body)
 			    lcd.setText("info","无效二维码")
 					lcd.oledShow(" ","Invalid SN")
 			else
+				Ports.lockPort(0)
 			    qrCode = string.sub(string.match(fbStr,"QRCode\":\"%w+\""),10,-2)
 			    qrCodeUrl = string.sub(string.match(fbStr,"QRCodeUrl\":\"[%w%d:_\/.]+\""),13,-2)
 			    qrLength = string.sub(string.match(fbStr,"QRLength\":%d+"),11,-1)
@@ -505,13 +506,13 @@ local function connectedcb()
 	if(validDev == false) then
 		if(nvm.get("qrCode")~=nil) then
 			setRequestType(1)
-			Ports.lockPort(0)
+			--Ports.lockPort(0)
 			httpclient:request("GET","/api/v1/device/getbysn/"..misc.getimei().."?encode=gbk",{"Connection: close"},"",rcvcb)
 	    lcd.setText("info","检查绑定状态...") 
 			lcd.oledShow(" ","Check Binding")
 		else
 			setRequestType(2)
-			Ports.lockPort(0)
+			--Ports.lockPort(0)
 			httpclient:request("GET","/api/v1/sn/info/"..misc.getimei().."?type=hex",{"Connection: close"},"",rcvcb)
 			lcd.setText("info","获取二维码")
 			lcd.oledShow(" ","Request QRCODE")

@@ -1,6 +1,6 @@
 MODULE_TYPE = "Air202"
 PROJECT = "LEWEI_GPRS_AIR_MONITOR"
-VERSION = "1.0.1"
+VERSION = "1.0.2"
 
 --***********************
 --replace vars from here
