@@ -41,7 +41,7 @@ local rdbuf = ""
 ∑µªÿ÷µ£∫Œﬁ
 ]]
 local function print(...)
-	--_G.print("[LCD]",...)
+	_G.print("[LCD]",...)
 end
 
 function showPage(pid)

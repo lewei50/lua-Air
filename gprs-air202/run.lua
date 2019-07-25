@@ -371,7 +371,7 @@ uart.setup(UART_ID,9600,8,uart.PAR_NONE,uart.STOP_1)
 
 lcd.setInfo("设备初始化中")
 
-sys.timer_start(statusChk,3000)
+sys.timer_start(statusChk,500)
 
 
 lcd.setPage(1)

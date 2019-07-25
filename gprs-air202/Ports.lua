@@ -15,6 +15,7 @@ pins.set(false,pincfg.PIN7)
 pins.set(false,pincfg.PIN6)
 
 function openPort(portId)
+	print("openPort "..portId)
 	if(pLock==false) then
 		if(portId == 1) then
 			pins.set(false,pincfg.PIN7)
